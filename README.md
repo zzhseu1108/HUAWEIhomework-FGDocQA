@@ -5,7 +5,7 @@
 
 提供 **Mock 离线演示**和 **HTTP API 模型接入**两种使用方式，也支持只给聊天接 API。前端采用海洋风格与社区 DeepSeek 鲸鱼娘素材，支持会话历史、收藏、文库浏览和图文阅读。
 
-![FGDocQA Web 工作台](assets/web-home-v2.jpg)
+![FGDocQA 首页：DeepSeek 社区鲸鱼娘、文档问答与知识文库](assets/web-home-v2.jpg)
 
 ## 功能
 
