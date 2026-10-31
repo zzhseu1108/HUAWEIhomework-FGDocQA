@@ -1,0 +1,42 @@
+[
+  {
+    "question": "分机注册后，呼叫是怎么转发到中继的？",
+    "expected_docs": ["02_分组转发设计"],
+    "expected_keywords": ["号码分析", "中继选路", "媒体协商"]
+  },
+  {
+    "question": "SD5993 单板怎么复位？命令是什么？",
+    "expected_docs": ["03_SD5993单板命令手册"],
+    "expected_keywords": ["reset board slot 3", "槽位"]
+  },
+  {
+    "question": "FE_HEART_Start 参数有什么用？",
+    "expected_docs": ["02_分组转发设计"],
+    "expected_keywords": ["instance", "trunk_group", "register_timeout"]
+  },
+  {
+    "question": "分机注册失败怎么排查？",
+    "expected_docs": ["04_运维故障处理"],
+    "expected_keywords": ["REGISTER", "防火墙", "NAT"]
+  },
+  {
+    "question": "v2.3.0 有什么新特性？",
+    "expected_docs": ["05_版本发布说明"],
+    "expected_keywords": ["号码分析热加载", "中继组自动倒换"]
+  },
+  {
+    "question": "FE_HEART 的三层架构分别负责什么？",
+    "expected_docs": ["01_系统总体架构"],
+    "expected_keywords": ["接入层", "控制层", "媒体层"]
+  },
+  {
+    "question": "呼叫接通了但没有声音，应该怎么排查？",
+    "expected_docs": ["04_运维故障处理"],
+    "expected_keywords": ["RTP", "SD5993", "编解码"]
+  },
+  {
+    "question": "中继全忙时系统怎么处理？",
+    "expected_docs": ["04_运维故障处理", "02_分组转发设计"],
+    "expected_keywords": ["忙音", "排队", "TRUNK_BUSY"]
+  }
+]

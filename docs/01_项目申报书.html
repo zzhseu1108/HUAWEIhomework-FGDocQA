@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>基于 AI Agent 的个人本地多模态文档智能问答系统 · 项目申报书</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: #1b2f42; background: #fff;
+    font-family: "Songti SC", "STSong", "SimSun", serif;
+    font-size: 10.6pt; line-height: 1.9;
+  }
+  .cover {
+    min-height: 245mm; display: flex; flex-direction: column; justify-content: center;
+    text-align: center; page-break-after: always; padding: 22mm 10mm;
+    background: linear-gradient(150deg, #f7fbfe, #eaf4fb);
+    border-top: 6px solid #1f6fb2; border-bottom: 6px solid #0f8a7e;
+  }
+  .cover .award { font-size: 11pt; color: #1f6fb2; letter-spacing: 1px; margin-bottom: 14mm; }
+  .cover h1 {
+    font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    font-size: 26pt; line-height: 1.4; color: #0b2a5b; margin: 0 0 8mm;
+  }
+  .cover .sub { font-size: 12pt; color: #3d6788; margin-bottom: 18mm; }
+  .cover .abstract {
+    text-align: left; font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    font-size: 9.6pt; line-height: 1.95; color: #2f4f68;
+    border: 1px solid #a9cde6; background: rgba(255,255,255,.72);
+    padding: 7mm 9mm; border-radius: 3mm;
+  }
+  .cover .abstract b { color: #0f7a71; }
+  .cover .meta { margin-top: 20mm; font-size: 9.5pt; color: #607c92; line-height: 2; }
+  h1, h2, h3, h4 {
+    font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    color: #0b2a5b; line-height: 1.45; page-break-after: avoid;
+  }
+  h1 { font-size: 20pt; margin: 0 0 6mm; padding-bottom: 3mm; border-bottom: 2px solid #1f6fb2; }
+  h2 { font-size: 14pt; margin: 9mm 0 3mm; padding-left: 3mm; border-left: 3px solid #0f8a7e; }
+  h3 { font-size: 12pt; margin: 6mm 0 2mm; }
+  h4 { font-size: 10.8pt; margin: 4mm 0 1.5mm; }
+  p { margin: 2.2mm 0; text-align: justify; }
+  strong { color: #0b3d6b; }
+  a { color: #1f6fb2; text-decoration: none; }
+  ul, ol { margin: 2mm 0 2mm 6mm; padding-left: 5mm; }
+  li { margin: 1mm 0; }
+  blockquote {
+    margin: 3mm 0; padding: 2.5mm 4mm; border-left: 3px solid #8fc0e2;
+    background: #f3f9fd; color: #3d5d75; font-size: 9.8pt;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 9pt;
+    background: #f0f6fa; color: #17619d; padding: 0.3mm 1.2mm; border-radius: 1mm;
+  }
+  pre {
+    background: #f6f9fb; border: 1px solid #dbe8f2; border-radius: 2mm;
+    padding: 3mm 4mm; overflow: auto; page-break-inside: avoid;
+  }
+  pre code { background: none; padding: 0; color: #2f4f68; font-size: 8.4pt; line-height: 1.55; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th, td { border: 1px solid #c9dcea; padding: 1.6mm 2.2mm; text-align: left; vertical-align: top; }
+  th { background: #eaf4fc; color: #12456d; font-family: "PingFang SC", sans-serif; font-weight: 600; }
+  tr:nth-child(even) td { background: #fbfdff; }
+  hr { border: 0; border-top: 1px dashed #c9dcea; margin: 5mm 0; }
+  .footer-note { margin-top: 12mm; padding-top: 3mm; border-top: 1px solid #dbe8f2;
+                  font-size: 8.4pt; color: #7a90a2; font-family: "PingFang SC", sans-serif; }
+  @media print { .cover { min-height: 250mm; } }
+</style>
+</head>
+<body>
+<section class="cover">
+  <div class="award">2026 年数通第八届爱迪生创新大赛 · 入围作品</div>
+  <h1>基于 AI Agent 的个人本地多模态文档智能问答系统 · 项目申报书</h1>
+  <div class="sub">doc2md × DocBase × AGENTS.md —— 让沉睡的本地文档“开口说话”</div>
+  <div class="abstract"><b>摘　要</b><br>个人本地沉淀了大量 PDF、Word、PPT 等多模态文档，一旦忘记存放位置与文件名，仅凭模糊的内容记忆极难找回。本创意通过 AI Agent（CodeAgent）自动开发 Python 脚本，结合 RAG、Embedding、Reranker、Chat、VL 等大模型能力，预解析本地文档并构建 RAG 数据库，再以 AGENTS.md 指导 Agent 消费该库，实现“内容即入口”的智能问答与精准溯源。</div>
+  <div class="meta">创意提交人：井永乐 | 00587807<br>转发开发部 [ICT BG] · 2026-07-30<br>技术栈：CodeAgent · RAG · Embedding · Reranker · Chat LLM · VL</div>
+</section>
+<h2 id="0-一页纸概览">0. 一页纸概览</h2>
+<table>
+<thead><tr><th>项目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>作品名称</td><td>基于 AI Agent 的个人本地多模态文档智能问答系统（DocQA）</td></tr>
+<tr><td>一句话</td><td>把「找文件」变成「问内容」——让沉睡的本地文档开口说话</td></tr>
+<tr><td>核心公式</td><td><code>doc2md × DocBase × AGENTS.md</code></td></tr>
+<tr><td>技术栈</td><td>CodeAgent、RAG、Embedding、Reranker、Chat LLM、VL</td></tr>
+<tr><td>模型支持</td><td>Qwen3-Embedding-8B、Qwen3-Reranker-8B、GLM-5.1、Qwen3.6-27B-VL（装备部提供）</td></tr>
+<tr><td>运行形态</td><td>全本地化运行；仅调用公司内部模型服务；数据不出本机</td></tr>
+<tr><td>当前进度</td><td>第 1–3 步已完成 Demo；第 4–5 步为可选扩展</td></tr>
+<tr><td>代码与文档</td><td>本仓库 <code>src/docqa</code>、<code>AGENTS.md</code>、<code>docs/</code>、<code>slides/</code></td></tr>
+</tbody></table>
+<hr>
+<h2 id="1-摘要">1. 摘要</h2>
+<p>个人本地沉淀了大量 PDF、Word、PPT 等多模态文档，一旦忘记存放位置与文件名，仅凭模糊的内容记忆极难找回。本创意通过 AI Agent（CodeAgent）自动开发 Python 脚本，结合 RAG、Embedding、Reranker、Chat、VL 等大模型能力，预解析本地文档并构建 RAG 数据库，再以 <code>AGENTS.md</code> 指导 Agent 消费该库，实现「内容即入口」的智能问答与精准溯源。</p>
+<p>传统检索的关键词来自文件名和标题，而人真正记得的往往是「那张画着三层架构的图」「某个叫 FE_HEART_Start 的参数」「上次说过中继全忙要排队」这类内容碎片。DocQA 把文档拆成可检索的知识单元，把图片读成可检索的文字，再用一份约定文件告诉 Agent「库在哪里、什么情况下查、查到后怎么引用」，最终让回答落到「文档名 + 页码 + 图号 + 原文链接」上。</p>
+<p>一句话：<strong>doc2md 把「看不懂的图」变成「读得懂的文」，DocBase 把「读得懂的文」变成「找得到的证据」，AGENTS.md 让 Agent 学会「查资料」。</strong></p>
+<hr>
+<h2 id="2-背景与问题">2. 背景与问题</h2>
+<h3 id="2-1-个人文档的三个断点">2.1 个人文档的三个断点</h3>
+<ol>
+<li><strong>存放断点</strong>：资料散落在下载目录、聊天附件、项目盘和本地文件夹，命名习惯随年限变化，靠目录树找文件越来越难。</li>
+<li><strong>记忆断点</strong>：只记得内容大意，不记得文件名；搜索引擎只能搜文件名/标题，搜不到正文，更搜不到图片里的信息。</li>
+<li><strong>信任断点</strong>：即便通用大模型给出了答案，也无法确认它来自哪份文档、哪一页，工程场景不敢直接采信。</li>
+</ol>
+<h3 id="2-2-多模态文档的-图片盲区">2.2 多模态文档的「图片盲区」</h3>
+<p>技术文档中约 <strong>30%–50%</strong> 的关键信息以图片承载：架构图、流程图、时序图、状态机、单板面板、组网拓扑。传统 RAG 只切文本，图片信息全部丢失；而人恰恰经常用「那张图」来记忆文档。</p>
+<h3 id="2-3-为什么现在可以做">2.3 为什么现在可以做</h3>
+<ul>
+<li>公司装备部已提供 Embedding、Reranker、Chat、VL 四类模型服务，能力就绪；</li>
+<li>CodeAgent（Claude Code / NGA 等）可以承担大量脚本开发与联调工作，个人也能在短周期内完成系统级交付；</li>
+<li>本地索引、轻量 Web、单机 Python 工程足以支撑个人与团队级的知识库规模；</li>
+<li><code>AGENTS.md</code> 这类项目级指令文件，为「让 Agent 按约定消费 RAG」提供了低成本、可版本化的载体。</li>
+</ul>
+<hr>
+<h2 id="3-目标与边界">3. 目标与边界</h2>
+<h3 id="3-1-目标">3.1 目标</h3>
+<ul>
+<li><strong>内容即入口</strong>：用户不必记得文件名，直接用自然语言描述内容即可定位文档与片段。</li>
+<li><strong>多模态可检索</strong>：图片经 VL 释义后与正文一体入库，图片信息不再丢失。</li>
+<li><strong>回答可溯源</strong>：每条结论都能回到文档名、页码、图号和原文链接。</li>
+<li><strong>本地可运行</strong>：解析、索引、问答全在本机完成；模型调用只走公司内部端点。</li>
+<li><strong>可演进</strong>：从个人 CLI 工具平滑扩展到团队 Service 与领域级 B/S 应用。</li>
+</ul>
+<h3 id="3-2-非目标-本期不做">3.2 非目标（本期不做）</h3>
+<ul>
+<li>不做公网 SaaS，不做多租户权限体系；</li>
+<li>不训练/微调模型，只做端点编排与检索增强；</li>
+<li>不承诺对扫描件做 100% 精准 OCR（VL 释义允许存在描述性误差，但溯源必须准确）；</li>
+<li>不替代专业文档管理系统，重点解决「找得到、答得出、可核对」。</li>
+</ul>
+<h3 id="3-3-成功判据">3.3 成功判据</h3>
+<table>
+<thead><tr><th>维度</th><th>判据</th></tr></thead>
+<tbody>
+<tr><td>找得到</td><td>典型问题 Top-6 命中目标文档；示例集 <code>hit_rate = 1.0</code></td></tr>
+<tr><td>答得准</td><td>回答中的命令、参数、步骤与原文一致；无据时明确拒答</td></tr>
+<tr><td>可核对</td><td>100% 结论带 <code>[n]</code>，可跳转文档名/页码/图号</td></tr>
+<tr><td>跑得动</td><td>单机 Mock 模式全链路 &lt; 1 s；真实模型模式下由端点时延决定</td></tr>
+<tr><td>可维护</td><td>五个变更点五个目录；接口契约字段只增不改</td></tr>
+</tbody></table>
+<hr>
+<h2 id="4-核心创意与创新点">4. 核心创意与创新点</h2>
+<h3 id="4-1-创新点一-doc2md-把图片变成-一等公民">4.1 创新点一：doc2md 把图片变成「一等公民」</h3>
+<p>不是「先 OCR 再拼文本」，而是把图片当作知识单元处理：</p>
+<ul>
+<li>提取位图与矢量图，统一转为可读图片；</li>
+<li>调用 Qwen3.6-27B-VL 做深度释义，不只识别文字，还理解模块、箭头、编号等结构化语义；</li>
+<li>释义写回原图引用处，切片后图文语义不割裂；</li>
+<li>图片按 <code>文档名_Page页码_Fig图序_Figure标题</code> 命名，和原文页码、图题绑定。</li>
+</ul>
+<h3 id="4-2-创新点二-三路混合检索-兼顾-术语精确-与-语义理解">4.2 创新点二：三路混合检索，兼顾「术语精确」与「语义理解」</h3>
+<p>纯向量检索对 <code>SD5993</code>、<code>FE_HEART_Start</code> 这类精确术语容易模糊命中；纯关键词检索又无法理解「分机转发是怎么走的」这类语义问题。</p>
+<p>DocBase 同时跑三路召回：</p>
+<ol>
+<li><strong>稠密向量</strong>：Qwen3-Embedding-8B，负责语义相似；</li>
+<li><strong>BM25 关键词</strong>：负责型号、命令、接口名等精确术语；</li>
+<li><strong>BGE-M3 稀疏向量</strong>：学习型稀疏表示，兼顾词面与权重。</li>
+</ol>
+<p>三路结果经 <strong>RRF 融合</strong> 消除量纲差异，再由 <strong>Qwen3-Reranker-8B 交叉编码精排</strong>，取 TOP-K 文本块交给 Agent。</p>
+<h3 id="4-3-创新点三-AGENTS-md-是-人与-Agent-的检索契约">4.3 创新点三：AGENTS.md 是「人与 Agent 的检索契约」</h3>
+<p>RAG 数据库本身不会自动被使用——必须有人「告诉」Agent 它的存在、用法与边界。<code>AGENTS.md</code> 把人的检索经验固化为四类约定：</p>
+<ul>
+<li><strong>存在性声明</strong>：本仓库配备 DocBase 库，先检索再回答；</li>
+<li><strong>查询策略</strong>：分类缩小范围；技术名词走 BM25，原理问题走向量；</li>
+<li><strong>溯源强制</strong>：附链接/文档名/页码/图号，无据不答；</li>
+<li><strong>产出形式</strong>：流程类问题用 Mermaid 重绘，并与原图对照。</li>
+</ul>
+<p>这让「RAG」从一段可选代码，变成 Agent 的默认工作方式，也是本创意区别于传统 RAG 产品的核心差异点。</p>
+<h3 id="4-4-创新点四-全链路溯源-回答敢采信">4.4 创新点四：全链路溯源，回答敢采信</h3>
+<p><code>回答 → 文本块 → Markdown → 原始文档</code> 四层可逐级回溯；图片再附加 <code>Page + Fig + 图题</code>。回答里的每个 <code>[n]</code> 都对应一个真实文本块，而不是模型编造的引用。</p>
+<hr>
+<h2 id="5-技术栈与模型支持">5. 技术栈与模型支持</h2>
+<h3 id="5-1-技术栈">5.1 技术栈</h3>
+<table>
+<thead><tr><th>技术</th><th>在本项目中的角色</th><th>关键价值</th></tr></thead>
+<tbody>
+<tr><td>CodeAgent</td><td>自动编写/联调 Python 脚本，承担解析、建库、CLI、Web 实现</td><td>AI 写代码、人做决策，缩短交付周期</td></tr>
+<tr><td>RAG</td><td>组织「解析 → 索引 → 检索 → 生成」全链路</td><td>让回答有据可依</td></tr>
+<tr><td>Embedding</td><td>Qwen3-Embedding-8B 文本向量化</td><td>语义召回</td></tr>
+<tr><td>Reranker</td><td>Qwen3-Reranker-8B 交叉编码精排</td><td>提升 TOP-K 准确率</td></tr>
+<tr><td>Chat LLM</td><td>GLM-5.1 多文档交叉推理与回答生成</td><td>把证据组织成可读答案</td></tr>
+<tr><td>VL</td><td>Qwen3.6-27B-VL 图片深度释义</td><td>把图片信息变成可检索文本</td></tr>
+</tbody></table>
+<h3 id="5-2-装备部模型支持">5.2 装备部模型支持</h3>
+<table>
+<thead><tr><th>能力</th><th>模型</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>Embedding</td><td>Qwen3-Embedding-8B</td><td>文本向量化（稠密检索）</td></tr>
+<tr><td>Reranker</td><td>Qwen3-Reranker-8B</td><td>交叉编码精排（TOP-K 筛选）</td></tr>
+<tr><td>Chat</td><td>GLM-5.1</td><td>多文档交叉推理、回答生成</td></tr>
+<tr><td>VL</td><td>Qwen3.6-27B-VL</td><td>图片深度释义（模块/箭头/编号语义）</td></tr>
+</tbody></table>
+<p>四类模型均由 <code>docqa/llm.py</code> 统一注入，端点可配置、可替换、可 Mock；版本升级不影响产物格式与数据契约。</p>
+<hr>
+<h2 id="6-系统总体架构">6. 系统总体架构</h2>
+<h3 id="6-1-三层解耦">6.1 三层解耦</h3>
+<pre><code>flowchart TB
+    subgraph L1[① 文档解析层 · doc2md]
+        A1[格式转换] --&gt; A2[OCR 提取] --&gt; A3[VL 多模态解析] --&gt; A4[Markdown 生成] --&gt; A5[溯源元信息前置] --&gt; A6[原始链接关系]
+    end
+    subgraph L2[② 知识库层 · DocBase]
+        B1[Chunk 切片] --&gt; B2[向量化] --&gt; B3[混合检索三路召回] --&gt; B4[RRF 融合] --&gt; B5[Reranker 重排] --&gt; B6[TOP-K 文本块]
+    end
+    subgraph L3[③ Agent 消费层 · AGENTS.md 驱动]
+        C1[AGENTS.md 知识入口] --&gt; C2[意图理解 / RAG 查询] --&gt; C3[GLM-5.1 综合推理] --&gt; C4[结构化产出] --&gt; C5[溯源输出]
+    end
+    L1 --&gt;|结构化 Markdown + 图片 AI 释义| L2
+    L2 --&gt;|含溯源元数据的 TOP-K| L3</code></pre>
+<p><strong>层次职责：</strong></p>
+<table>
+<thead><tr><th>层</th><th>输入</th><th>处理</th><th>输出</th></tr></thead>
+<tbody>
+<tr><td>文档解析层 · doc2md</td><td>PDF / Word / PPT / Markdown</td><td>格式转换、图片提取、VL 释义、溯源命名</td><td>结构化 Markdown + 图片 AI 释义 + manifest</td></tr>
+<tr><td>知识库层 · DocBase</td><td>解析后的 Markdown</td><td>语义切片、三路索引、RRF、精排</td><td>含溯源元数据的 TOP-K 文本块</td></tr>
+<tr><td>Agent 消费层</td><td>自然语言问题</td><td>意图分析、检索编排、综合推理、结构化呈现</td><td>可溯源的回答</td></tr>
+</tbody></table>
+<p>三层各司其职、接口清晰：<strong>解析入库 → 混合检索 → Agent 问答</strong>。</p>
+<h3 id="6-2-文档解析层-doc2md">6.2 文档解析层（doc2md）</h3>
+<p>流程：</p>
+<pre><code>格式转换（PDF/Word/PPT → MD）
+  → OCR 提取（位图 + 矢量图）
+  → VL 多模态解析（Qwen3.6-27B-VL 释义）
+  → Markdown 生成（图片描述写入正文）
+  → 溯源元信息前置（文档名 · Page · Figure Title）
+  → 原始链接关系（可逆向定位原文）</code></pre>
+<p>产出：<strong>结构化 Markdown + 图片 AI 释义</strong>。</p>
+<h3 id="6-3-知识库层-DocBase">6.3 知识库层（DocBase）</h3>
+<p>流程：</p>
+<pre><code>Chunk 切片（语义分段 · 多文档）
+  → 向量化（Qwen3-Embedding-8B）
+  → 混合检索三路召回（稠密向量 + BM25 + BGE-M3）
+  → RRF 融合（多路结果归并）
+  → Reranker 重排（Qwen3-Reranker-8B）
+  → TOP-K 文本块（含溯源元数据）</code></pre>
+<p>能力：<code>build</code>（进度条）/ <code>query</code> / <code>test</code> 三模式。</p>
+<h3 id="6-4-Agent-消费层">6.4 Agent 消费层</h3>
+<p>流程：</p>
+<pre><code>AGENTS.md 知识入口（指导 Agent 如何消费 RAG）
+  → 意图理解 / RAG 查询（自动构建 query 检索知识库）
+  → GLM-5.1 综合推理（多文档交叉 · 生成回答）
+  → 结构化产出（Mermaid 图 / 表格 / 摘要）
+  → 溯源输出（定位原始文档与页码）</code></pre>
+<p>扩展：后台 Service、Web 应用（可选，不启用不影响核心功能）。</p>
+<hr>
+<h2 id="7-逻辑视图">7. 逻辑视图</h2>
+<blockquote>AGENTS.md 驱动 Agent 消费 · 三路混合检索 · 图文一体解析 · 全链路溯源<br><br>全本地化运行，仅调用公司内部模型服务，数据不出本机。</blockquote>
+<h3 id="7-1-用户入口层">7.1 用户入口层</h3>
+<ul>
+<li><strong>CLI 命令行问答</strong>（CodeAgent + AGENTS.md）：<code>./run.sh ask &quot;...&quot;</code></li>
+<li><strong>Web 网页问答</strong>（B/S · 无头 Agent，可选）：<code>./run.sh serve --open</code></li>
+</ul>
+<h3 id="7-2-Agent-消费层-DOCQA-AGENT-DRV">7.2 Agent 消费层（DOCQA.AGENT-DRV）</h3>
+<table>
+<thead><tr><th>环节</th><th>做什么</th><th>实现要点</th></tr></thead>
+<tbody>
+<tr><td>意图分析</td><td>拆解检索词、判断问题分类</td><td>命令/流程/版本/排障/概念五类</td></tr>
+<tr><td>RAG 查询</td><td>调用 DocBase 检索</td><td>原问题 + 去疑问词改写，多 query 合并</td></tr>
+<tr><td>充足性自评</td><td>信息不足时多轮补充检索</td><td>相关度阈值 + 语义覆盖率，最多 2 轮</td></tr>
+<tr><td>综合推理</td><td>GLM-5.1 跨文档交叉</td><td>只依据检索资料，强制 <code>[n]</code></td></tr>
+<tr><td>结构化回答</td><td>Mermaid / 表格 / 摘要</td><td>流程类重绘，与原图对照</td></tr>
+</tbody></table>
+<p><strong>约定</strong>：必须先检索 · 无据不答 · 回答强制附原文链接/文档名/页码/图号。</p>
+<h3 id="7-3-RAG-检索引擎-DOCQA-DocBase">7.3 RAG 检索引擎（DOCQA.DocBase）</h3>
+<p>三路并行召回、互补检索盲区：</p>
+<ul>
+<li><strong>稠密向量检索</strong>：Qwen3-Embedding 语义相似度；</li>
+<li><strong>BM25 关键词检索</strong>：精确术语命中（型号/命令/接口名）；</li>
+<li><strong>BGE-M3 稀疏检索</strong>：学习型稀疏向量，兼顾词面权重。</li>
+</ul>
+<pre><code>三路召回 → RRF 融合（倒数排序归并）→ 交叉编码精排（Reranker-8B）→ TOP-K 文本块（携带溯源）</code></pre>
+<p>三种工作模式：<code>build</code> 建库（进度条）/ <code>query</code> 检索 / <code>test</code> 评估。</p>
+<p><code>test</code> 模式输出 <strong>召回率 / 命中率 / MRR</strong>，支撑检索参数调优；任一路异常自动降级可用。</p>
+<h3 id="7-4-知识资产层-本地持久化-增量更新">7.4 知识资产层（本地持久化 · 增量更新）</h3>
+<table>
+<thead><tr><th>资产</th><th>内容</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>Markdown 语料库</td><td>标题层级、图文一体</td><td>解析产物，Agent 最友好的知识格式</td></tr>
+<tr><td>溯源图片库</td><td>文档名 · Page 图序 · 原图</td><td>图片可逆向定位</td></tr>
+<tr><td>RAG 三路索引</td><td>稠密向量 + BM25 + 稀疏</td><td>本地 JSON 持久化</td></tr>
+<tr><td>文档注册表</td><td>分类管理 · 增量更新</td><td>文档哈希、chunk 数、来源</td></tr>
+</tbody></table>
+<p>索引格式版本化，支持增量更新与回滚。</p>
+<h3 id="7-5-文档解析引擎-DOCQA-Doc2md">7.5 文档解析引擎（DOCQA.Doc2md）</h3>
+<pre><code>多格式输入（PDF/Word/PPT）
+  → 格式统一（转 Markdown）
+  → OCR 提取（位置/矢量图）
+  → VL 释义（图文一体写入）</code></pre>
+<ul>
+<li><strong>溯源命名</strong>：<code>文档名_Page图序_Figure标题</code>，可逆向定位原文；</li>
+<li><strong>矢量图</strong>：先渲染为位图再识别，释义写入原图引用处；</li>
+<li><strong>图片描述</strong>：VL 释义以引用块写入正文，切片后仍与上下文同块。</li>
+</ul>
+<h3 id="7-6-内部模型服务-装备部-端点可配置">7.6 内部模型服务（装备部 · 端点可配置）</h3>
+<table>
+<thead><tr><th>服务</th><th>模型</th><th>职责</th></tr></thead>
+<tbody>
+<tr><td>VL</td><td>Qwen3.6-27B-VL</td><td>图片深度释义（模块/箭头/编号语义）</td></tr>
+<tr><td>Embedding</td><td>Qwen3-Embedding-8B</td><td>文本向量化（稠密检索）</td></tr>
+<tr><td>Reranker</td><td>Qwen3-Reranker-8B</td><td>交叉编码精排（TOP-K 筛选）</td></tr>
+<tr><td>Chat</td><td>GLM-5.1</td><td>多文档交叉推理 · 回答生成</td></tr>
+</tbody></table>
+<p>端点级配置注入，可替换 / 可 Mock，版本升级不影响产物格式。</p>
+<h3 id="7-7-可选扩展-不启用不影响核心功能">7.7 可选扩展（不启用不影响核心功能）</h3>
+<ul>
+<li><strong>后台 Service</strong>：定时/增量更新、监控目录管理；</li>
+<li><strong>Web 应用</strong>：B/S 网页问答、Mermaid 图形渲染。</li>
+</ul>
+<h3 id="7-8-全链路溯源-无据不答">7.8 全链路溯源 · 无据不答</h3>
+<pre><code>回答 → 文本块 → Markdown → 原始文档</code></pre>
+<p>原文链接 · 文档名 · 页码 · 图号，一键跳回原文。检索不足时输出「无据不答」，而不是让模型自由发挥。</p>
+<hr>
+<h2 id="8-开发视图">8. 开发视图</h2>
+<blockquote>Python 工程组织 · 变更点 ■ 模块映射 · 分层依赖单向 · 契约稳定</blockquote>
+<h3 id="8-1-工程目录结构-数据与约定分离">8.1 工程目录结构（数据与约定分离）</h3>
+<pre><code>docqa/
+├── doc2md/                 # 变更点 1：解析层
+│   ├── parser.py           # 统一入口 + pdf/word/ppt 解析
+│   ├── image_extractor.py  # 图片保存、尺寸识别
+│   ├── vl_client.py        # VL 释义适配
+│   ├── naming.py           # 溯源命名
+│   └── models.py           # ImageInfo / ParseTask / ParseResult
+├── docbase/                # 变更点 2：检索层
+│   ├── chunker.py          # 语义切片
+│   ├── indexer.py          # build / 增量 / 三路索引
+│   ├── retriever.py        # query / RRF / rerank
+│   ├── evaluator.py        # test：recall@k / hit_rate / MRR
+│   └── models.py           # Chunk / RagIndex / QueryResult
+├── agent/                  # 变更点 3：消费层
+│   ├── answer.py           # 问答主流程
+│   ├── llm_client.py       # （由 llm.py 统一承载）
+│   └── models.py           # Answer / Citation
+├── service/                # 变更点 4：可选扩展
+│   ├── watcher.py          # 目录监控、增量更新
+│   └── models.py
+├── web/                    # 变更点 5：可选扩展
+│   ├── server.py           # stdlib HTTP 服务
+│   ├── models.py           # WebQueryResponse
+│   └── static/index.html   # B/S 前端
+├── llm.py                  # 四类模型端点 + Mock
+├── cli.py                  # parse/build/query/ask/eval/serve/watch/demo
+└── utils.py
+tests/                      # test_doc2md / test_docbase / test_agent / test_web
+AGENTS.md                   # 知识消费约定</code></pre>
+<h3 id="8-2-五个变更点">8.2 五个变更点</h3>
+<table>
+<thead><tr><th>变更点</th><th>目录</th><th>职责</th><th>稳定契约</th></tr></thead>
+<tbody>
+<tr><td>变更点 1</td><td><code>doc2md/</code></td><td>多格式解析、VL 释义、溯源命名</td><td><code>ImageInfo</code> / <code>ParseTask</code> / <code>ParseResult</code></td></tr>
+<tr><td>变更点 2</td><td><code>docbase/</code></td><td>切片、建库、三路召回、精排、评估</td><td><code>Chunk</code> / <code>RagIndex</code> / <code>QueryResult</code></td></tr>
+<tr><td>变更点 3</td><td><code>agent/</code></td><td>意图、检索编排、生成、引用</td><td><code>answer_question</code> 契约</td></tr>
+<tr><td>变更点 4</td><td><code>service/</code></td><td>监控目录、定时/增量更新</td><td><code>WatchConfig</code></td></tr>
+<tr><td>变更点 5</td><td><code>web/</code></td><td>B/S 问答、原文查看</td><td><code>WebQueryResponse</code></td></tr>
+</tbody></table>
+<p><strong>换 Agent / 换模型不改约定与契约。</strong></p>
+<h3 id="8-3-关键数据契约-字段只增不改">8.3 关键数据契约（字段只增不改）</h3>
+<table>
+<thead><tr><th>契约</th><th>字段</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>doc2md.models.ImageInfo</code></td><td>image_id / doc_name / page / figure_index / title / path / description / source_uri</td><td>每张图片的完整溯源</td></tr>
+<tr><td><code>doc2md.models.ParseTask</code></td><td>task_id / src / out_dir / doc_type / category / vl_mode</td><td>一次解析任务</td></tr>
+<tr><td><code>doc2md.models.ParseResult</code></td><td>markdown_path / images / warnings / pages / page_mode</td><td>解析产物</td></tr>
+<tr><td><code>docbase.models.Chunk</code></td><td>chunk_id / doc_id / doc_name / heading / text / page / category / source_uri / images</td><td>最小检索单元</td></tr>
+<tr><td><code>docbase.models.RagIndex</code></td><td>version / docs / chunks / stats / embedding_model</td><td>索引元数据 + 清单</td></tr>
+<tr><td><code>docbase.models.QueryResult</code></td><td>query / hits / route_stats / latency_ms / index_version</td><td>检索结果</td></tr>
+<tr><td><code>agent.answer_question</code></td><td>answer / format / citations / rounds_used</td><td>回答契约</td></tr>
+<tr><td><code>web.WebQueryResponse</code></td><td>与 <code>answer_question</code> 对齐</td><td>B/S 直接消费</td></tr>
+</tbody></table>
+<h3 id="8-4-分层依赖-自上而下单向">8.4 分层依赖（自上而下单向）</h3>
+<pre><code>入口层：web / service（无头 Agent 调用 · 定时增量触发）
+   ↓
+Agent 层：agent（AGENTS.md 约定 · 意图分析 · 多轮检索编排）
+   ↓
+检索层：docbase（切片 / 建库 / 三路召回 / 精排 / 评估）
+   ↓
+解析层：doc2md（格式转换 / OCR / VL 释义 / 溯源命名）
+   ↓
+模型端点层：VL · Embedding · Reranker · GLM-5.1（外部服务 · 可 Mock）</code></pre>
+<p>依赖方向：上层依赖下层，仅经 <code>models</code> 契约通信，禁止反向依赖。</p>
+<h3 id="8-5-可测性设计">8.5 可测性设计</h3>
+<ul>
+<li><code>docbase</code> 内置 <code>test</code> 模式：<code>recall@k</code> / <code>hit_rate</code> / <code>MRR</code>；</li>
+<li>四类模型服务统一端点注入，单元测试用 Mock 替换；</li>
+<li>溯源链路确定性：<code>回答 → Chunk → MD → 原文</code>，端到端断言；</li>
+<li><code>doc2md</code> 产物图文互证：Mermaid 重绘 vs 原图对照；</li>
+<li>当前测试：19 个单元/集成用例全部通过。</li>
+</ul>
+<h3 id="8-6-核心接口-Spec-契约">8.6 核心接口（Spec 契约）</h3>
+<pre><code># doc2md
+parse_document(src, out_dir, category=None, hub=None, options=None) -&gt; ParseResult
+batch_parse(dir, out_root, recursive=True, types=None, ...) -&gt; List[ParseResult]
+
+# docbase
+build_index(md_dir, index_dir, incremental=False, chunk_size=1200, overlap=120) -&gt; dict
+query(index_dir, q, top_k=6, category=None) -&gt; QueryResult
+evaluate(index_dir, test_set, top_k=6) -&gt; dict
+
+# agent
+answer_question(q, index_dir, max_rounds=2, top_k=6, category=None) -&gt; Answer
+
+# service / web（可选）
+run_watch(WatchConfig, ...)
+GET /api/stats | GET /api/doc | POST /api/ask</code></pre>
+<p><strong>兼容设计</strong>：溯源字段只增不改；索引版本可回滚；CLI 参数向后兼容。</p>
+<hr>
+<h2 id="9-关键流程">9. 关键流程</h2>
+<h3 id="9-1-解析入库">9.1 解析入库</h3>
+<pre><code>sequenceDiagram
+    participant U as 用户
+    participant P as doc2md
+    participant V as VL 模型
+    participant K as DocBase
+    U-&gt;&gt;P: PDF/Word/PPT/Markdown
+    P-&gt;&gt;P: 格式转换 + 图片提取
+    P-&gt;&gt;V: 图片 + 页码 + 图题 + 上下文
+    V--&gt;&gt;P: 图片释义
+    P-&gt;&gt;P: 写入 Markdown（引用块 + 溯源元信息）
+    P--&gt;&gt;U: document.md + assets + manifest.json
+    U-&gt;&gt;K: build
+    K-&gt;&gt;K: 切片 / 三路向量 / 索引落盘</code></pre>
+<h3 id="9-2-问答">9.2 问答</h3>
+<ol>
+<li>用户提问 →</li>
+<li>Agent 意图分析、生成原问题 + 改写 query →</li>
+<li>DocBase 三路召回、RRF、精排、TOP-K →</li>
+<li>充足性自评：不足则扩写 query 二次检索（最多 2 轮）→</li>
+<li>足够：GLM-5.1 综合 / 抽取式回退，生成带 <code>[n]</code> 的回答 →</li>
+<li>结构化呈现（Mermaid / 表格 / 步骤）→</li>
+<li>溯源输出（文档名 + 页码 + 图号 + 链接）。</li>
+</ol>
+<p>S 形工作流：<strong>提问 → 检索 → 综合 → 呈现 → 溯源</strong>，全程由 <code>AGENTS.md</code> 约定驱动；Agent 可自主判断「答案够不够好」，不足时自动发起第二轮检索。</p>
+<h3 id="9-3-降级策略">9.3 降级策略</h3>
+<table>
+<thead><tr><th>故障</th><th>行为</th></tr></thead>
+<tbody>
+<tr><td>某一路召回异常</td><td>记录 <code>degraded</code>，其余两路继续，RRF 可用</td></tr>
+<tr><td>Reranker 异常</td><td>回退 RRF 排序，回答仍可生成</td></tr>
+<tr><td>Chat 端点异常</td><td>回退抽取式回答（原文句子 + 引用）</td></tr>
+<tr><td>VL 端点异常</td><td>回退基于图注/上下文的 Mock 释义，并标注 <code>[VL-Mock]</code></td></tr>
+<tr><td>索引不存在</td><td>CLI/Web 给出明确建库指引，不返回空答案</td></tr>
+</tbody></table>
+<hr>
+<h2 id="10-实施路径-五步渐进-逐步演进">10. 实施路径：五步渐进，逐步演进</h2>
+<blockquote>全部通过 CodeAgent Vibe Coding 开发——<strong>AI 写代码，人做决策</strong>。</blockquote>
+<table>
+<thead><tr><th>步骤</th><th>名称</th><th>定位</th><th>状态</th><th>关键能力</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>文档格式转换工具 doc2md</td><td>基础必做</td><td>已完成 Demo</td><td>一键转 Markdown、OCR 提图、VL 释义、溯源命名</td></tr>
+<tr><td>2</td><td>RAG 检索工具 DocBase</td><td>基础必做</td><td>已完成 Demo</td><td>切片向量化、三路召回、RRF + 精排、build/query/test</td></tr>
+<tr><td>3</td><td>AGENTS.md 知识消费约定</td><td>基础必做</td><td>已完成 Demo</td><td>约定何时查/怎么查/如何引用、回答 + 溯源</td></tr>
+<tr><td>4</td><td>后台 Service 自动化运维</td><td>可选扩展 · 团队级</td><td>已提供可运行实现</td><td>定时/增量更新、目录监控、单文档解析</td></tr>
+<tr><td>5</td><td>B/S 架构 Web 应用</td><td>可选扩展 · 领域级</td><td>已提供可运行实现</td><td>网页问答、Mermaid 渲染、原文查看</td></tr>
+</tbody></table>
+<h3 id="10-1-第-1-步-doc2md">10.1 第 1 步：doc2md</h3>
+<ul>
+<li>PDF / Word / PPT 一键转 Markdown；</li>
+<li>OCR 提取文档内图片（位置 + 矢量图）；</li>
+<li>调用 VL 模型解析图片内容并写入 Markdown；</li>
+<li>保留对原始文档的链接关系；</li>
+<li>图片命名含文档名 / Page / Figure Title，支持逆向溯源。</li>
+</ul>
+<p>Demo：<code>codehub-y.huawei.com/j00587807/doc2md</code></p>
+<h3 id="10-2-第-2-步-DocBase">10.2 第 2 步：DocBase</h3>
+<ul>
+<li>Markdown 切片（Chunk）+ 向量化入库；</li>
+<li>三路混合召回：稠密向量 + BM25 关键词 + BGE-M3 稀疏检索；</li>
+<li>RRF 融合 + Reranker 重排，筛选 TOP-K；</li>
+<li><code>build</code>（进度条显示）/ <code>query</code> / <code>test</code> 三命令；</li>
+<li>支持多文档、文档分类管理。</li>
+</ul>
+<p>Demo：<code>codehub-y.huawei.com/j00587807/DocBase</code></p>
+<h3 id="10-3-第-3-步-AGENTS-md-知识消费约定">10.3 第 3 步：AGENTS.md 知识消费约定</h3>
+<ul>
+<li>编写 <code>AGENTS.md</code> 指导 CodeAgent 消费 RAG 向量化数据库与 Markdown 原文；</li>
+<li>约定查询策略：何时检索、如何组合、如何引用原文；</li>
+<li>给出符合预期的回答 + 溯源功能，快速定位到原始文档；</li>
+<li>示例：<code>DocBase/CLAUDE.md</code>（参考配置文件）。</li>
+</ul>
+<h3 id="10-4-第-4-步-后台-Service-自动化运维-可选">10.4 第 4 步：后台 Service 自动化运维（可选）</h3>
+<ul>
+<li>定时/增量更新指定目录、指定文档类型；</li>
+<li>文档管理、向量化数据库管理、图片解析管理；</li>
+<li>支持新增监控目录、单文档解析、递归搜索；</li>
+<li>文档库持续保鲜，无需人工干预；知识库随文档沉淀自动演进。</li>
+</ul>
+<h3 id="10-5-第-5-步-B-S-架构-Web-应用-可选">10.5 第 5 步：B/S 架构 Web 应用（可选）</h3>
+<ul>
+<li>脱离 CodeAgent 命令行，网页图形界面；</li>
+<li>后台调用 CodeAgent 无头模式：<code>claude -p</code> / <code>nga run</code>；</li>
+<li>确保回答质量，图形渲染更直观；</li>
+<li>从个人工具升级为团队级、领域级应用；降低使用门槛、扩大覆盖人群。</li>
+</ul>
+<p><strong>1–3 步构建核心闭环，4–5 步面向团队与领域规模演进。</strong></p>
+<hr>
+<h2 id="11-评测与验收">11. 评测与验收</h2>
+<h3 id="11-1-指标体系">11.1 指标体系</h3>
+<table>
+<thead><tr><th>指标</th><th>定义</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>recall@k</code></td><td>Top-k 中命中的期望文档数 / 期望文档总数</td><td>衡量召回覆盖</td></tr>
+<tr><td><code>hit_rate</code></td><td>Top-k 是否至少命中一个期望文档</td><td>衡量「找得到」</td></tr>
+<tr><td><code>MRR</code></td><td>第一个相关结果的倒数排名均值</td><td>衡量排序质量</td></tr>
+<tr><td><code>keyword_hit_rate</code></td><td>Top-k 文本中命中期望关键词的比例</td><td>衡量证据完整性</td></tr>
+<tr><td><code>traceability</code></td><td>有 <code>[n]</code> 且可跳转原文的回答占比</td><td>衡量可信度</td></tr>
+<tr><td><code>latency</code></td><td>检索/问答端到端耗时</td><td>衡量体验</td></tr>
+</tbody></table>
+<h3 id="11-2-示例集结果-Mock-模式-5-文档-32-块-8-用例">11.2 示例集结果（Mock 模式，5 文档 / 32 块 / 8 用例）</h3>
+<table>
+<thead><tr><th>指标</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td><code>recall@6</code></td><td>1.00</td></tr>
+<tr><td><code>hit_rate</code></td><td>1.00</td></tr>
+<tr><td><code>MRR</code></td><td>1.00</td></tr>
+<tr><td><code>keyword_hit_rate</code></td><td>1.00</td></tr>
+<tr><td>平均检索耗时</td><td>约 2 ms</td></tr>
+<tr><td>单次问答耗时</td><td>约 9–15 ms（Mock）</td></tr>
+<tr><td>单元/集成测试</td><td>19 项通过</td></tr>
+</tbody></table>
+<blockquote><strong>说明</strong>：以上为作者自建的小型演示语料与 8 条测试问题，用于验证「链路闭环与指标口径」，不代表生产泛化效果。真实环境需用部门文档构建更大规模测试集，并接入真实 Embedding/Reranker 后重新评估。</blockquote>
+<h3 id="11-3-验收清单">11.3 验收清单</h3>
+<ul>
+<li>[x] 5 个示例文档完成解析，3 张图片带 VL 释义与 Page/Fig/标题；</li>
+<li>[x] 索引可增量更新、可回滚（版本号 + 三件套）；</li>
+<li>[x] 三路召回、RRF、Reranker 全链路可运行；</li>
+<li>[x] 流程类问题输出 Mermaid，并与原图页码/图号对照；</li>
+<li>[x] 命令类问题给出可执行命令与注意事项；</li>
+<li>[x] 无据问题明确拒答，不编造；</li>
+<li>[x] CLI、Web、watcher 三种入口可运行；</li>
+<li>[x] 19 项测试通过；</li>
+<li>[x] 项目书、技术设计、实施验收、答辩讲稿、汇报 Deck 齐全。</li>
+</ul>
+<hr>
+<h2 id="12-风险与对策">12. 风险与对策</h2>
+<table>
+<thead><tr><th>风险</th><th>影响</th><th>对策</th></tr></thead>
+<tbody>
+<tr><td>内部模型端点不稳定</td><td>解析/问答失败</td><td>四类端点统一注入；自动降级 Mock；失败告警写入 warnings</td></tr>
+<tr><td>PDF 矢量图无法直接提取</td><td>架构图信息丢失</td><td>位图直提；矢量图渲染扩展（PyMuPDF）；EMF/WMF 明确告警</td></tr>
+<tr><td>Word 无固定分页</td><td>页码不精确</td><td><code>page_mode=estimated</code> 明示；精确页码优先 PDF/PPT；图片仍带图序</td></tr>
+<tr><td>模型幻觉/编造页码</td><td>回答不可信</td><td>检索阈值 + 无据不答 + 仅引用真实 Chunk + 端到端溯源断言</td></tr>
+<tr><td>敏感文档外泄</td><td>合规风险</td><td>全本地运行；Web 绑定 127.0.0.1；仅在配置后调用内部端点；不写密钥</td></tr>
+<tr><td>索引漂移</td><td>回答与文档不一致</td><td>文档哈希 + 增量更新 + 索引版本 + 可回滚</td></tr>
+<tr><td>规模增长</td><td>检索变慢</td><td>批量 embedding、增量建库、向量库替换点（接口不变）</td></tr>
+<tr><td>中文分词误差</td><td>召回不稳定</td><td>字符 bigram + ASCII 词混合；真实 Embedding 兜底语义</td></tr>
+</tbody></table>
+<hr>
+<h2 id="13-价值与推广">13. 价值与推广</h2>
+<h3 id="13-1-个人价值">13.1 个人价值</h3>
+<ul>
+<li>不再依赖文件名和目录树，用「记得的内容」直接找回文档；</li>
+<li>图片里的架构、流程、命令也能被问答；</li>
+<li>每条回答可核对，敢在工程场景使用。</li>
+</ul>
+<h3 id="13-2-团队价值">13.2 团队价值</h3>
+<ul>
+<li>第 4 步 Service 化后，目录定时/增量更新，知识库自动保鲜；</li>
+<li>新人用自然语言即可查历史设计、命令手册、故障处理；</li>
+<li>统一 <code>AGENTS.md</code> 约定，避免每个人「重新教 Agent 查资料」。</li>
+</ul>
+<h3 id="13-3-领域价值">13.3 领域价值</h3>
+<ul>
+<li>第 5 步 B/S 化后，从个人工具升级为团队级、领域级应用；</li>
+<li>可复制到产品文档、运维手册、测试规范、投标材料等场景；</li>
+<li>全本地 + 内部模型，满足数据不出机的合规要求。</li>
+</ul>
+<h3 id="13-4-成本">13.4 成本</h3>
+<ul>
+<li>软件栈：Python 标准库 + 可选 pypdf，无重依赖；</li>
+<li>模型：复用装备部现有服务，不新增训练成本；</li>
+<li>存储：演示索引约 0.6 MB；规模随文档量线性增长；</li>
+<li>人力：CodeAgent 辅助，1–3 步可在短周期内完成 Demo。</li>
+</ul>
+<hr>
+<h2 id="14-交付物">14. 交付物</h2>
+<table>
+<thead><tr><th>交付物</th><th>路径</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>可运行工程</td><td><code>src/docqa/</code></td><td>解析、索引、检索、Agent、Web、watcher</td></tr>
+<tr><td>知识消费约定</td><td><code>AGENTS.md</code> / <code>CLAUDE.md</code></td><td>四类约定与命令速查</td></tr>
+<tr><td>示例知识库</td><td><code>examples/docs/</code></td><td>5 篇 FE_HEART 演示文档 + 3 张图</td></tr>
+<tr><td>一键 Demo</td><td><code>./run.sh demo</code></td><td>parse → build → ask → eval</td></tr>
+<tr><td>测试</td><td><code>tests/</code></td><td>19 项单元/集成测试</td></tr>
+<tr><td>项目申报书</td><td><code>docs/01_项目申报书.md</code></td><td>本文件</td></tr>
+<tr><td>技术设计</td><td><code>docs/02_技术设计说明书.md</code></td><td>契约、算法、接口、安全</td></tr>
+<tr><td>实施验收</td><td><code>docs/03_实施与验收.md</code></td><td>里程碑、演示脚本、验收</td></tr>
+<tr><td>答辩讲稿</td><td><code>docs/04_答辩讲稿.md</code></td><td>逐页讲稿与 Q&amp;A</td></tr>
+<tr><td>汇报 Deck</td><td><code>slides/DocQA-项目汇报.html</code> / <code>.pdf</code></td><td>10 页，复刻并扩展原始 8 页内容</td></tr>
+</tbody></table>
+<hr>
+<h2 id="15-结语">15. 结语</h2>
+<p>DocQA 不追求「做一个更大的模型」，而是把已有的模型能力组织成一条<strong>可解释、可核对、可维护</strong>的知识流水线：</p>
+<ul>
+<li>用 doc2md 让图片进入检索；</li>
+<li>用 DocBase 让检索兼顾术语与语义；</li>
+<li>用 AGENTS.md 让 Agent 养成「先查资料」的习惯；</li>
+<li>用全链路溯源让每一句回答都能回到原文。</li>
+</ul>
+<p>让每一份沉睡的本地文档，都能开口说话。</p>
+<div class="footer-note">DocQA · 基于 AI Agent 的个人本地多模态文档智能问答系统 · 井永乐 | 00587807 · 2026-07-30</div>
+</body>
+</html>

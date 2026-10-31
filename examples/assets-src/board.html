@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    width:1200px; height:600px; padding:38px 50px;
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:#fff; color:#17344e;
+    background-image:radial-gradient(#e4edf5 0.8px, transparent 0.8px);
+    background-size:24px 24px;
+  }
+  .head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:26px; }
+  h1 { font-size:27px; }
+  .head span { font-size:12px; color:#7b91a4; }
+  .board {
+    height:238px; border-radius:14px; padding:22px 26px;
+    background:linear-gradient(180deg,#f7fafc,#e9f0f6);
+    border:1.5px solid #b9cddd; box-shadow:0 10px 26px rgba(26,73,110,.10), inset 0 1px 0 #fff;
+    display:flex; gap:22px; align-items:stretch; position:relative;
+  }
+  .section { border-radius:9px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .section h3 { font-size:12px; color:#5f7a90; font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
+  .ports { display:flex; gap:8px; }
+  .port {
+    width:52px; height:58px; border-radius:6px; background:#2b3b48;
+    border:2px solid #1c2833; position:relative; box-shadow:inset 0 2px 6px rgba(0,0,0,.35);
+  }
+  .port::before {
+    content:""; position:absolute; left:8px; right:8px; top:8px; height:24px;
+    background:#0e161d; border-radius:3px; box-shadow:inset 0 1px 0 #465966;
+  }
+  .port::after {
+    content:""; position:absolute; left:12px; right:12px; bottom:8px; height:6px;
+    background:#61757f; border-radius:2px; opacity:.55;
+  }
+  .port .led { position:absolute; right:4px; top:4px; width:5px; height:5px; border-radius:50%; background:#47d18a; box-shadow:0 0 5px #47d18a; }
+  .port .num { position:absolute; left:0; right:0; bottom:-17px; text-align:center; font-size:9px; color:#6e8497; }
+  .section .cap { font-size:10px; color:#8399ab; margin-top:auto; }
+  .up { background:#e8f1f9; border:1px solid #c8dbea; }
+  .biz { background:#eef7f3; border:1px solid #c4e0d5; flex:1; }
+  .mgmt { background:#fbf3e8; border:1px solid #ecd6bb; width:190px; }
+  .tiny { width:44px; height:44px; border-radius:6px; background:#3b4d5a; border:2px solid #26343f; position:relative; }
+  .tiny::after { content:""; position:absolute; inset:8px; border:1px solid #728792; border-radius:3px; opacity:.6; }
+  .leds { display:flex; gap:10px; margin-top:4px; }
+  .led { display:flex; align-items:center; gap:5px; font-size:10px; color:#5f788e; }
+  .dot { width:8px; height:8px; border-radius:50%; }
+  .g { background:#35c27b; box-shadow:0 0 6px #35c27b; }
+  .r { background:#e05a4f; box-shadow:0 0 6px #e05a4f; }
+  .y { background:#e5a93d; box-shadow:0 0 6px #e5a93d; }
+  .legend { display:flex; gap:28px; margin-top:34px; }
+  .legend div { flex:1; border-left:3px solid #2f7fd1; padding-left:12px; }
+  .legend h4 { font-size:13px; color:#154d78; margin-bottom:5px; }
+  .legend p { font-size:11.5px; color:#647c90; line-height:1.6; }
+  .legend .b { border-left-color:#0f8f84; }
+  .legend .o { border-left-color:#d9822b; }
+  .foot { position:absolute; left:50px; right:50px; bottom:20px; font-size:10.5px; color:#8ba0b1;
+          border-top:1px dashed #dbe6ee; padding-top:8px; display:flex; justify-content:space-between; }
+</style>
+</head>
+<body>
+  <div class="head"><h1>SD5993 单板面板布局</h1><span>FE_HEART 媒体处理单板 · 8 业务口 · 2 上行口</span></div>
+
+  <div class="board">
+    <div class="section up" style="width:176px;">
+      <h3>Uplink</h3>
+      <div class="ports">
+        <div class="port"><i class="led"></i><span class="num">GE0</span></div>
+        <div class="port"><i class="led"></i><span class="num">GE1</span></div>
+      </div>
+      <div class="cap">2 × GE 电口 · 支持链路聚合</div>
+    </div>
+
+    <div class="section biz">
+      <h3>Service Ports</h3>
+      <div class="ports" style="justify-content:space-between;">
+        <div class="port"><i class="led"></i><span class="num">P0</span></div>
+        <div class="port"><i class="led"></i><span class="num">P1</span></div>
+        <div class="port"><i class="led"></i><span class="num">P2</span></div>
+        <div class="port"><i class="led"></i><span class="num">P3</span></div>
+        <div class="port"><i class="led"></i><span class="num">P4</span></div>
+        <div class="port"><i class="led"></i><span class="num">P5</span></div>
+        <div class="port"><i class="led"></i><span class="num">P6</span></div>
+        <div class="port"><i class="led"></i><span class="num">P7</span></div>
+      </div>
+      <div class="cap">8 × 媒体业务口 · 放音 / 录音 / 混音 / 转码</div>
+    </div>
+
+    <div class="section mgmt">
+      <h3>Management</h3>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <div class="tiny"></div>
+        <div class="tiny"></div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div class="leds"><span class="led"><i class="dot g"></i>RUN</span><span class="led"><i class="dot r"></i>ALM</span></div>
+          <div class="leds"><span class="led"><i class="dot y"></i>ACT</span><span class="led"><i class="dot g"></i>PWR</span></div>
+        </div>
+      </div>
+      <div class="cap">MGMT + Console · 带外管理</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div><h4>上行口</h4><p>GE0/GE1 连接控制层交换机，默认主备；支持 LACP 链路聚合，单链路故障不中断业务。</p></div>
+    <div class="b"><h4>业务口</h4><p>P0–P7 连接媒体接入网络，按槽位划分媒体资源池，支持热插拔与在线替换。</p></div>
+    <div class="o"><h4>管理口</h4><p>MGMT 默认 192.168.100.10，Console 参数 115200 8N1；生产环境经堡垒机接入。</p></div>
+  </div>
+
+  <div class="foot"><span>SD5993 面板示意 · 图 1</span><span>RUN 常亮=运行正常 · ALM 红灯=存在告警</span></div>
+</body>
+</html>

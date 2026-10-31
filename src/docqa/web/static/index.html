@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f8ff">
+<meta name="description" content="FGDocQA 本地文档工作空间：与文档对话，检索知识，收藏每一次有据可循的发现。">
+<title>FGDocQA · 让知识浮出海面</title>
+<link rel="icon" href="/favicon.ico?v=dsh-web-20261029-v2" type="image/x-icon" sizes="32x32 64x64 128x128"><link rel="shortcut icon" href="/favicon.ico?v=dsh-web-20261029-v2"><link rel="apple-touch-icon" href="/static/dsh-web-icon.png?v=2"><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script>
+</head>
+<body>
+<svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/><path d="M8 11h8m-8 4h5"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5.5C9 3 5 3 2.5 4.5v15C5 18 9 18 12 20.5c3-2.5 7-2.5 9.5-1v-15C19 3 15 3 12 5.5Zm0 0v15"/></symbol>
+<symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4V4Z"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+<symbol id="i-flow" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="5" rx="1.5"/><rect x="2" y="17" width="8" height="5" rx="1.5"/><rect x="14" y="17" width="8" height="5" rx="1.5"/><path d="M12 7v5m-6 5v-5h12v5"/></symbol>
+<symbol id="i-terminal" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="m6 8 4 4-4 4m7 0h5"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Zm7-2 .8 2.2L22 4l-2.2.8L19 7l-.8-2.2L16 4l2.2-.8L19 1Z"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 4-4 7-8 9-4-2-8-5-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+</defs></svg>
+<div class="app">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<aside class="sidebar" id="sidebar" aria-label="工作空间导航">
+<a class="brand" href="/" aria-label="FGDocQA 首页"><span class="brand-mark"><img src="/static/dsh-web-icon.png" alt="DSH Web 鲸鱼娘图标" width="40" height="40"></span><span>FGDocQA<small>知识，自有回响</small></span></a>
+<button class="new-chat" id="newChat"><svg class="icon"><use href="#i-plus"/></svg>开启新对话<span>⌘ K</span></button>
+<nav class="navigation" aria-label="主导航">
+<button class="nav-item active" data-view="chat" aria-current="page"><svg class="icon"><use href="#i-chat"/></svg><span>智能问答</span></button>
+<button class="nav-item" data-view="library"><svg class="icon"><use href="#i-book"/></svg><span>知识文库</span><span class="nav-dot"></span></button>
+<button class="nav-item" data-view="saved"><svg class="icon"><use href="#i-bookmark"/></svg><span>我的收藏</span><span class="nav-count" id="savedCount">0</span></button>
+</nav>
+<div class="history-heading"><span>最近对话</span><span class="history-local">仅存本机</span></div><div class="history-list" id="historyList"></div>
+<div class="sidebar-bottom">
+<div class="library-status"><div class="status-title"><span class="status-dot" id="statusDot"></span><span id="connectionText">正在连接知识库…</span><svg class="icon"><use href="#i-shield"/></svg></div><div class="stats"><div><b id="statDocs">—</b><span>文档</span></div><div><b id="statChunks">—</b><span>知识片段</span></div><div><b id="statImages">—</b><span>图片</span></div></div></div>
+<div class="companion"><div class="companion-avatar"><img src="/static/whale-guide.png" alt="DeepSeek 鲸鱼娘" width="48" height="48"></div><div><b>今天，也一起探索吧</b><span>DeepSeek 鲸鱼娘 · 社区同人</span></div><span class="companion-sparkle">✧</span></div>
+<a class="art-credit" href="/static/ARTWORK-LICENSE.md" target="_blank" rel="noopener">素材来源与署名 <span>↗</span></a>
+</div>
+</aside>
+<main class="main">
+<header class="topbar"><button class="icon-button mobile-menu" id="mobileMenu" aria-label="打开导航"><svg class="icon"><use href="#i-menu"/></svg></button><div class="breadcrumb"><span>个人工作空间</span><i>/</i><h1 id="sessionTitle">智能问答</h1></div><div class="top-actions"><span class="mode-badge" id="modeBadge"><i></i><span id="modeText">连接中</span></span><button class="export-button" id="exportChat" title="导出当前对话为 Markdown"><svg class="icon"><use href="#i-download"/></svg><span>导出对话</span></button></div></header>
+<section class="view-chat" id="chatView" aria-label="智能问答">
+<div class="chat" id="chat"><div class="chat-inner">
+<section class="welcome" id="welcome">
+<div class="hero">
+<div class="hero-copy"><span class="eyebrow"><span></span>与知识相遇的另一种方式</span><h2>让每一份好奇，<br><em>都有据可循。</em></h2><p>从一段文字，到一张藏着答案的图。<br>和你的文档聊一聊，让知识慢慢浮出海面。</p><div class="hero-note"><svg class="icon"><use href="#i-shield"/></svg>本地文档 · 可信引用 · 无据不答</div></div>
+<div class="hero-art" aria-label="DeepSeek 社区鲸鱼娘插画"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="art-sparkle sparkle-one">✦</span><span class="art-sparkle sparkle-two">✧</span><img src="/static/whale-guide.png" alt="蓝发蓝白女仆装的 DeepSeek 鲸鱼娘" fetchpriority="high" width="320" height="320"><div class="art-caption"><span></span>正在知识的海洋里，等你。</div></div>
+</div>
+<div class="section-heading"><h3>从一个好问题开始</h3><span>一点灵感，开启探索</span></div>
+<div class="examples">
+<button class="example" data-q="分机注册后，呼叫是怎么转发到中继的？"><span class="example-icon blue"><svg class="icon"><use href="#i-flow"/></svg></span><b>把复杂流程，理清楚</b><p>分机注册后，呼叫怎么转发到中继？</p><span class="example-bottom">流程理解<svg class="icon"><use href="#i-arrow"/></svg></span></button>
+<button class="example" data-q="SD5993 单板怎么复位？命令是什么？"><span class="example-icon mint"><svg class="icon"><use href="#i-terminal"/></svg></span><b>找到那条，关键命令</b><p>SD5993 单板怎么复位？</p><span class="example-bottom">精确查找<svg class="icon"><use href="#i-arrow"/></svg></span></button>
+<button class="example" data-q="v2.3.0 有什么新特性？"><span class="example-icon lilac"><svg class="icon"><use href="#i-sparkles"/></svg></span><b>让新变化，一目了然</b><p>v2.3.0 带来了哪些新特性？</p><span class="example-bottom">版本速览<svg class="icon"><use href="#i-arrow"/></svg></span></button>
+</div>
+<div class="section-heading library-heading"><h3>知识库一览 <span class="count-label" id="docCount"></span></h3><button class="text-button" data-view="library">查看文库<svg class="icon"><use href="#i-arrow"/></svg></button></div>
+<div class="doc-list" id="docList"><div class="empty-state">正在连接你的知识库…</div></div>
+</section><div class="messages" id="messages" aria-live="polite" aria-relevant="additions"></div>
+</div></div>
+<div class="composer"><div class="composer-inner"><div class="composer-box"><div class="composer-scope"><svg class="icon"><use href="#i-book"/></svg><label class="sr-only" for="categorySelect">问答检索范围</label><select id="categorySelect"><option value="">全部知识库</option></select><span>每个答案，都有出处</span></div><div class="composer-input"><textarea id="input" rows="1" maxlength="2000" placeholder="向文档提个问题，让答案浮出海面…" aria-label="输入问题"></textarea><button class="send" id="send" aria-label="发送问题"><svg class="icon"><use href="#i-up"/></svg></button></div></div><div class="composer-foot"><span><kbd>↵</kbd> 发送 <i>·</i> Shift + Enter 换行</span><span>鲸鱼娘陪你探索，答案以文档为据。</span></div></div></div>
+</section>
+<section class="workspace-view" id="libraryView" aria-label="知识文库" hidden><div class="view-inner"><span class="eyebrow">YOUR KNOWLEDGE LIBRARY</span><h2>你的知识，井然有序。</h2><p class="view-description">浏览本地文档，或搜索正文与图片释义，直达原始出处。</p><div class="library-searchbar"><svg class="icon"><use href="#i-search"/></svg><input id="librarySearch" type="search" placeholder="搜索文档内容、术语或问题…" aria-label="搜索知识库"><label class="sr-only" for="libraryCategory">文库分类</label><select id="libraryCategory"><option value="">全部分类</option></select><button id="librarySearchBtn" class="primary-button">搜索</button></div><div class="section-heading"><h3 id="libraryCount">全部文档</h3><span>点击文档，展开阅读</span></div><div class="library-results" id="libraryResults"></div></div></section>
+<section class="workspace-view" id="savedView" aria-label="我的收藏" hidden><div class="view-inner"><span class="eyebrow">A PLACE FOR GOOD ANSWERS</span><h2>留住每一次，有用的发现。</h2><p class="view-description">收藏值得重读的回答，让好知识随时可以找回来。</p><div id="savedList" class="saved-list"></div></div></section>
+<span class="index-version" id="versionText" hidden></span>
+</main></div>
+<div class="drawer-overlay" id="overlay"></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="文档阅读器" tabindex="-1"><div class="drawer-head"><div><span class="eyebrow">回到知识的源头</span><h2 id="drawerTitle">文档原文</h2><p id="drawerMeta"></p></div><button class="icon-button" id="drawerClose" aria-label="关闭文档"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="drawer-body" id="drawerBody"></div><div class="drawer-foot"><span>原始文件</span><code id="drawerSource"></code></div></aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body></html>

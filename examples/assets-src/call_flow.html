@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    width:1200px; height:750px; padding:40px 50px;
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:#fff; color:#18344f;
+    background-image:linear-gradient(#eef4f9 1px, transparent 1px),linear-gradient(90deg,#eef4f9 1px,transparent 1px);
+    background-size:30px 30px;
+  }
+  h1 { font-size:28px; letter-spacing:.4px; }
+  .sub { margin-top:8px; color:#70869a; font-size:13px; display:flex; gap:18px; }
+  .sub b { color:#1f6fb2; font-weight:600; }
+  .flow { display:flex; align-items:center; margin-top:44px; }
+  .step { width:164px; height:172px; background:#fff; border:1.4px solid #c9dbe9; border-radius:12px;
+          padding:14px 13px; position:relative; box-shadow:0 4px 12px rgba(30,80,120,.06); }
+  .step .no { width:26px; height:26px; border-radius:50%; background:#1f6fb2; color:#fff;
+              display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+  .step h3 { font-size:15px; margin:9px 0 7px; color:#123b5f; }
+  .step p { font-size:11.5px; color:#5f788e; line-height:1.55; }
+  .step .tech { position:absolute; bottom:12px; left:13px; font-size:10px; color:#8ba0b2; }
+  .step:nth-child(6n+1) { border-top:3px solid #2f7fd1; }
+  .step:nth-child(6n+2) { border-top:3px solid #3d8ec9; }
+  .step:nth-child(6n+3) { border-top:3px solid #0f8f84; }
+  .step:nth-child(6n+4) { border-top:3px solid #0f8f84; }
+  .step:nth-child(6n+5) { border-top:3px solid #d9822b; }
+  .step:nth-child(6n+6) { border-top:3px solid #b96318; }
+  .arrow { flex:0 0 18px; height:2px; background:#89abc6; position:relative; }
+  .arrow::after { content:""; position:absolute; right:-1px; top:-4px;
+                  border:5px solid transparent; border-left-color:#89abc6; }
+  .panel { margin-top:34px; display:flex; gap:18px; }
+  .card { flex:1; border:1px solid #d5e3ee; border-radius:12px; padding:16px 18px; background:#f9fcfe; }
+  .card h4 { font-size:14px; color:#14507d; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card h4 i { width:8px; height:8px; border-radius:2px; background:#1f6fb2; display:inline-block; }
+  .card p { font-size:12px; color:#5c7489; line-height:1.7; }
+  .card code { background:#e9f2f9; color:#17619d; padding:1px 5px; border-radius:4px; font-size:11px; }
+  .split { display:flex; gap:10px; margin-top:8px; }
+  .chip { font-size:11px; color:#4f6d86; background:#eef5fb; border:1px solid #d9e7f2; border-radius:999px; padding:3px 9px; }
+  .ex { border-left:3px solid #d9822b; background:#fffaf3; }
+  .ex h4 i { background:#d9822b; }
+  .foot { position:absolute; bottom:26px; left:50px; right:50px; display:flex; justify-content:space-between;
+          font-size:11px; color:#8398aa; border-top:1px dashed #d7e4ee; padding-top:10px; }
+</style>
+</head>
+<body>
+  <h1>分组转发呼叫接续流程</h1>
+  <div class="sub"><span>FE_HEART v2.3.0</span><span>CP / SIP / RTP</span><span><b>FE_HEART_Start</b> 实例启动后生效</span></div>
+
+  <div class="flow">
+    <div class="step"><div class="no">1</div><h3>分机 REGISTER</h3><p>携带分机号码、认证信息与 Contact 地址，向接入网关发起注册。</p><div class="tech">SIP REGISTER</div></div>
+    <div class="arrow"></div>
+    <div class="step"><div class="no">2</div><h3>鉴权</h3><p>校验密码与注册状态，通过后写入在线用户表。</p><div class="tech">401 / 403</div></div>
+    <div class="arrow"></div>
+    <div class="step"><div class="no">3</div><h3>号码分析</h3><p>提取被叫号码，匹配长途、局向与分机号段，输出目标中继组。</p><div class="tech">前缀匹配</div></div>
+    <div class="arrow"></div>
+    <div class="step"><div class="no">4</div><h3>中继选路</h3><p>选择可用中继，支持主备倒换与负荷分担；全忙则放音或排队。</p><div class="tech">TRUNK GROUP</div></div>
+    <div class="arrow"></div>
+    <div class="step"><div class="no">5</div><h3>媒体协商</h3><p>SDP Offer/Answer 协商编解码、地址与端口，申请媒体资源。</p><div class="tech">SD5993 · RTP</div></div>
+    <div class="arrow"></div>
+    <div class="step"><div class="no">6</div><h3>通话建立</h3><p>被叫应答后进入通话态，开始计费并生成话单。</p><div class="tech">200 OK · ACK</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <h4><i></i>正常路径</h4>
+      <p>六个阶段串行执行，任一阶段失败都会回收已占用资源并返回明确 SIP 响应码。呼叫全程使用同一 <code>Call-ID</code> 关联日志、告警与话单。</p>
+      <div class="split"><span class="chip">P95 &lt; 200 ms</span><span class="chip">1000 路并发</span><span class="chip">全链路可追溯</span></div>
+    </div>
+    <div class="card ex">
+      <h4><i></i>异常分支</h4>
+      <p><b>注册失败</b>：401/403 或超时，连续失败 5 次锁定。<b>号码分析失败</b>：404，记录最长匹配前缀。<b>中继全忙</b>：放音或排队，60 秒超时释放。<b>媒体协商失败</b>：488，上报告警 <code>MEDIA_NEGO_FAIL</code>。</p>
+    </div>
+    <div class="card">
+      <h4><i></i>媒体承接</h4>
+      <p>分组转发只处理信令选路，媒体流由 <b>SD5993</b> 单板承接。资源调度器按负荷选择槽位，单板故障时自动隔离并重新分配。</p>
+      <div class="split"><span class="chip">放音</span><span class="chip">录音</span><span class="chip">会议混音</span><span class="chip">转码</span></div>
+    </div>
+  </div>
+
+  <div class="foot"><span>FE_HEART 分组转发设计 · 图 2-1</span><span>信令与媒体分离 · 主备倒换 &lt; 3 s</span></div>
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>DocQA 技术设计说明书</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: #1b2f42; background: #fff;
+    font-family: "Songti SC", "STSong", "SimSun", serif;
+    font-size: 10.6pt; line-height: 1.9;
+  }
+  .cover {
+    min-height: 245mm; display: flex; flex-direction: column; justify-content: center;
+    text-align: center; page-break-after: always; padding: 22mm 10mm;
+    background: linear-gradient(150deg, #f7fbfe, #eaf4fb);
+    border-top: 6px solid #1f6fb2; border-bottom: 6px solid #0f8a7e;
+  }
+  .cover .award { font-size: 11pt; color: #1f6fb2; letter-spacing: 1px; margin-bottom: 14mm; }
+  .cover h1 {
+    font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    font-size: 26pt; line-height: 1.4; color: #0b2a5b; margin: 0 0 8mm;
+  }
+  .cover .sub { font-size: 12pt; color: #3d6788; margin-bottom: 18mm; }
+  .cover .abstract {
+    text-align: left; font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    font-size: 9.6pt; line-height: 1.95; color: #2f4f68;
+    border: 1px solid #a9cde6; background: rgba(255,255,255,.72);
+    padding: 7mm 9mm; border-radius: 3mm;
+  }
+  .cover .abstract b { color: #0f7a71; }
+  .cover .meta { margin-top: 20mm; font-size: 9.5pt; color: #607c92; line-height: 2; }
+  h1, h2, h3, h4 {
+    font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    color: #0b2a5b; line-height: 1.45; page-break-after: avoid;
+  }
+  h1 { font-size: 20pt; margin: 0 0 6mm; padding-bottom: 3mm; border-bottom: 2px solid #1f6fb2; }
+  h2 { font-size: 14pt; margin: 9mm 0 3mm; padding-left: 3mm; border-left: 3px solid #0f8a7e; }
+  h3 { font-size: 12pt; margin: 6mm 0 2mm; }
+  h4 { font-size: 10.8pt; margin: 4mm 0 1.5mm; }
+  p { margin: 2.2mm 0; text-align: justify; }
+  strong { color: #0b3d6b; }
+  a { color: #1f6fb2; text-decoration: none; }
+  ul, ol { margin: 2mm 0 2mm 6mm; padding-left: 5mm; }
+  li { margin: 1mm 0; }
+  blockquote {
+    margin: 3mm 0; padding: 2.5mm 4mm; border-left: 3px solid #8fc0e2;
+    background: #f3f9fd; color: #3d5d75; font-size: 9.8pt;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 9pt;
+    background: #f0f6fa; color: #17619d; padding: 0.3mm 1.2mm; border-radius: 1mm;
+  }
+  pre {
+    background: #f6f9fb; border: 1px solid #dbe8f2; border-radius: 2mm;
+    padding: 3mm 4mm; overflow: auto; page-break-inside: avoid;
+  }
+  pre code { background: none; padding: 0; color: #2f4f68; font-size: 8.4pt; line-height: 1.55; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th, td { border: 1px solid #c9dcea; padding: 1.6mm 2.2mm; text-align: left; vertical-align: top; }
+  th { background: #eaf4fc; color: #12456d; font-family: "PingFang SC", sans-serif; font-weight: 600; }
+  tr:nth-child(even) td { background: #fbfdff; }
+  hr { border: 0; border-top: 1px dashed #c9dcea; margin: 5mm 0; }
+  .footer-note { margin-top: 12mm; padding-top: 3mm; border-top: 1px solid #dbe8f2;
+                  font-size: 8.4pt; color: #7a90a2; font-family: "PingFang SC", sans-serif; }
+  @media print { .cover { min-height: 250mm; } }
+</style>
+</head>
+<body>
+
+<h1 id="DocQA-技术设计说明书">DocQA 技术设计说明书</h1>
+<blockquote>版本：v1.0 · 对应代码：<code>src/docqa/</code> · 更新日期：2026-10-24<br><br>本文回答三个问题：<strong>系统怎么分层、层与层之间靠什么契约通信、关键算法如何实现。</strong></blockquote>
+<hr>
+<h2 id="1-设计范围与原则">1. 设计范围与原则</h2>
+<h3 id="1-1-范围">1.1 范围</h3>
+<p>覆盖 DocQA 的五条主链路：</p>
+<ol>
+<li>多模态文档解析（<code>doc2md</code>）；</li>
+<li>语义切片与三路索引（<code>docbase.indexer</code>）；</li>
+<li>三路召回、RRF 融合与精排（<code>docbase.retriever</code>）；</li>
+<li>Agent 问答编排与强制溯源（<code>agent.answer</code>）；</li>
+<li>可选的服务化入口（<code>service.watcher</code>、<code>web.server</code>）。</li>
+</ol>
+<h3 id="1-2-设计原则">1.2 设计原则</h3>
+<table>
+<thead><tr><th>原则</th><th>落地方式</th></tr></thead>
+<tbody>
+<tr><td>分层单向依赖</td><td><code>web/service → agent → docbase → doc2md → llm</code>，禁止反向 import</td></tr>
+<tr><td>契约稳定</td><td>跨层只经 <code>models.py</code>；字段只增不改</td></tr>
+<tr><td>模型可替换</td><td>四类端点统一由 <code>ModelHub</code> 注入；Mock 可离线跑通</td></tr>
+<tr><td>证据优先</td><td>回答只使用检索到的 Chunk；不足即拒答</td></tr>
+<tr><td>可核对</td><td>每个 Chunk 带 doc/page/heading/source；图片额外带 fig/title</td></tr>
+<tr><td>可回滚</td><td>索引版本化；<code>index.json + vectors.json + sparse.json</code> 三件套</td></tr>
+<tr><td>无重依赖</td><td>运行时仅标准库；PDF 解析可选 <code>pypdf</code></td></tr>
+</tbody></table>
+<hr>
+<h2 id="2-总体架构">2. 总体架构</h2>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│ 入口层  CLI / Web / Service(watcher)                          │
+├──────────────────────────────────────────────────────────────┤
+│ Agent 层  answer_question：意图 → 检索 → 自评 → 生成 → 引用   │
+├──────────────────────────────────────────────────────────────┤
+│ 检索层  DocBase：chunk / build / query / RRF / rerank / eval  │
+├──────────────────────────────────────────────────────────────┤
+│ 解析层  doc2md：PDF/Word/PPT/MD → Markdown + 图片释义 + manifest│
+├──────────────────────────────────────────────────────────────┤
+│ 模型端点层  VL / Embedding / Reranker / Chat（可 HTTP / Mock） │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<p>依赖方向自上而下；<code>models.py</code> 是各层之间唯一的数据通道。</p>
+<hr>
+<h2 id="3-doc2md-解析层">3. doc2md 解析层</h2>
+<h3 id="3-1-入口与分发">3.1 入口与分发</h3>
+<pre><code>parse_document(src, out_dir=None, category=None, hub=None, options=None) -&gt; ParseResult</code></pre>
+<ul>
+<li>通过扩展名 + 文件头识别类型（PDF <code>%PDF</code>、OOXML <code>PK</code> + <code>word/</code>/<code>ppt/</code>）；</li>
+<li>支持 <code>.md/.markdown</code>、<code>.pdf</code>、<code>.docx</code>、<code>.pptx</code>、<code>.txt/.text/.log</code>；</li>
+<li>输出目录固定包含：</li>
+<li><code>document.md</code>：带 front matter 的结构化 Markdown；</li>
+<li><code>assets/</code>：按溯源规范重命名的图片；</li>
+<li><code>manifest.json</code>：解析任务、图片清单、统计、警告。</li>
+</ul>
+<h3 id="3-2-Markdown-解析">3.2 Markdown 解析</h3>
+<p>逐行扫描：</p>
+<ol>
+<li><code>&lt;!-- page: N --&gt;</code> 更新当前页码；</li>
+<li><code>!<a href="path">alt</a></code> 解析本地图片：</li>
+</ol>
+<ul>
+<li>相对路径 → 源文件目录；</li>
+<li>复制到 <code>assets/</code>，按 <code>文档名_Page{N}_Fig{k}_{标题}.ext</code> 命名；</li>
+<li>调 VL 释义；</li>
+<li>在原位置替换为「图片 + 引用块 + 元信息注释」；</li>
+</ul>
+<ol>
+<li>标题、正文、表格原样保留；</li>
+<li>front matter 重新生成（doc_id / source / pages / page_mode / category / parsed_at）。</li>
+</ol>
+<p>图片写回格式：</p>
+<pre><code>![图题](assets/文档名_Page2_Fig1_图题.png)
+
+&gt; **图 2-1 · 图题**（VL 释义）：……图中模块与箭头……该图位于《文档名》第 2 页……
+
+&lt;!-- docqa:image path=assets/... page=2 figure=1 title=图题 --&gt;</code></pre>
+<h3 id="3-3-PDF-解析">3.3 PDF 解析</h3>
+<ul>
+<li>使用 <code>pypdf</code> 逐页 <code>extract_text()</code>；PDF 取图需 <code>Pillow</code>；</li>
+<li>每页写入 <code>&lt;!-- page: N --&gt;</code>，页码 <strong>exact</strong>；</li>
+<li><code>page.images</code> 提取嵌入位图，写入当前页；</li>
+<li>图题从页内最后几行中匹配 <code>图 N</code> / <code>Figure N</code>；</li>
+<li>矢量图（PDF drawings）当前版本不直接渲染，记录告警；扩展点见 §11；</li>
+<li>无 <code>pypdf</code> 时给出明确安装提示，不静默失败。</li>
+</ul>
+<h3 id="3-4-DOCX-解析">3.4 DOCX 解析</h3>
+<p>不依赖 <code>python-docx</code>，直接解析 OOXML：</p>
+<ul>
+<li>读取 <code>word/document.xml</code>、<code>word/_rels/document.xml.rels</code>、<code>word/media/*</code>；</li>
+<li>段落：<code>w:p</code> → <code>w:t</code> 拼接；<code>w:pStyle</code> 识别 Heading/标题；</li>
+<li>图片：<code>a:blip</code> 的 <code>r:embed</code> → rels → media；</li>
+<li>表格：<code>w:tbl</code> → GFM 表格；</li>
+<li>分页：<code>w:br type=&quot;page&quot;</code> 与 <code>w:lastRenderedPageBreak</code> 估算页码；</li>
+<li><code>page_mode = estimated</code>，在 manifest/回答中明示。</li>
+</ul>
+<h3 id="3-5-PPTX-解析">3.5 PPTX 解析</h3>
+<ul>
+<li><code>ppt/slides/slideN.xml</code> 按编号排序，一页幻灯片 = 一页；</li>
+<li>段落 <code>a:p</code> → <code>a:t</code>；第一段作为标题；</li>
+<li>通过 <code>ppt/slides/_rels/slideN.xml.rels</code> 提取图片；</li>
+<li>页码 <strong>exact</strong>，输出 <code>## Slide N</code> + 列表 + 图片块。</li>
+</ul>
+<h3 id="3-6-图片与溯源命名">3.6 图片与溯源命名</h3>
+<pre><code>文档名_Page{页码}_Fig{图序}_{Figure标题}.{ext}</code></pre>
+<ul>
+<li>图序按页内计数；</li>
+<li>标题优先取图注（<code>图 1 ...</code>），否则取 alt；</li>
+<li>移除路径分隔符、空格，保留中文；</li>
+<li><code>ImageInfo.source_uri</code> 形如 <code>file:///.../doc.md#page=2&amp;figure=1</code>；</li>
+<li>图片释义与原文页码、图题、原图路径绑定，支持「图文互证」。</li>
+</ul>
+<h3 id="3-7-VL-释义协议">3.7 VL 释义协议</h3>
+<p><strong>真实端点</strong>（OpenAI-compatible）：</p>
+<pre><code>POST {base}/chat/completions
+{
+  &quot;model&quot;: &quot;Qwen3.6-27B-VL&quot;,
+  &quot;messages&quot;: [{
+    &quot;role&quot;: &quot;user&quot;,
+    &quot;content&quot;: [
+      {&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: &quot;请描述图中模块/箭头/编号/关键文字…&quot;},
+      {&quot;type&quot;: &quot;image_url&quot;, &quot;image_url&quot;: {&quot;url&quot;: &quot;data:image/png;base64,...&quot;}}
+    ]
+  }]
+}</code></pre>
+<p>Prompt 要求：客观描述模块、连线方向、编号步骤、关键数值；不臆造；220 字内。</p>
+<p><strong>Mock 模式</strong>：用作者提供的图注/alt + 版式关键词生成可复现释义，并在文末标注「离线 Mock 释义」。Mock 不替代真实读图能力，只保证离线链路与测试可跑。</p>
+<h3 id="3-8-失败与降级">3.8 失败与降级</h3>
+<table>
+<thead><tr><th>场景</th><th>行为</th></tr></thead>
+<tbody>
+<tr><td>图片不存在</td><td>保留原引用 + warning</td></tr>
+<tr><td>EMF/WMF/SVG/TIFF</td><td>跳过读图 + warning（需先渲染）</td></tr>
+<tr><td>VL 端点失败</td><td>回退 Mock 释义 + 记录 warning</td></tr>
+<tr><td>PDF 取文/取图失败</td><td>该页为空 + warning，不中断整篇</td></tr>
+<tr><td>不支持的格式</td><td>抛 <code>ValueError</code>，CLI 返回非 0</td></tr>
+</tbody></table>
+<hr>
+<h2 id="4-DocBase-检索层">4. DocBase 检索层</h2>
+<h3 id="4-1-语义切片">4.1 语义切片</h3>
+<p><code>chunk_markdown(text, doc_meta, images, chunk_size=1200, overlap=120)</code></p>
+<ul>
+<li>以标题与页码为边界：<strong>一个 Chunk 不跨页</strong>，保证引用页码准确；</li>
+<li>按空行切段落；段落超长时按句子切；</li>
+<li>代码块/Mermaid 保持原子性；若与前文合计不超限，则合并到同一 Chunk（让流程步骤与流程图同块）；</li>
+<li>Chunk 文本前缀 <code>【标题路径】</code>，保留章节语义；</li>
+<li>附带该块引用到的图片元数据（<code>images</code>）；</li>
+<li>过短块（&lt; 20 字）丢弃，避免噪声。</li>
+</ul>
+<p>Chunk 字段：</p>
+<table>
+<thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>chunk_id</code></td><td>str</td><td><code>sha1(doc_id:order:text)[:16]</code></td></tr>
+<tr><td><code>doc_id</code></td><td>str</td><td>文档稳定标识</td></tr>
+<tr><td><code>doc_name</code></td><td>str</td><td>文档名</td></tr>
+<tr><td><code>heading</code></td><td>str</td><td>标题路径，如 <code>A / B / C</code></td></tr>
+<tr><td><code>text</code></td><td>str</td><td>含标题前缀与图片释义的检索文本</td></tr>
+<tr><td><code>page</code></td><td>int</td><td>起始页码</td></tr>
+<tr><td><code>category</code></td><td>str</td><td>分类</td></tr>
+<tr><td><code>source_path</code></td><td>str</td><td>原始文档绝对路径</td></tr>
+<tr><td><code>source_uri</code></td><td>str</td><td><code>file://...#page=N</code></td></tr>
+<tr><td><code>order</code></td><td>int</td><td>文档内顺序</td></tr>
+<tr><td><code>images</code></td><td>list</td><td>关联图片元数据</td></tr>
+<tr><td><code>content_hash</code></td><td>str</td><td>文本哈希</td></tr>
+<tr><td><code>char_count</code></td><td>int</td><td>字符数</td></tr>
+</tbody></table>
+<h3 id="4-2-Tokenizer">4.2 Tokenizer</h3>
+<p>无第三方分词依赖，混合中英文：</p>
+<ul>
+<li>ASCII：<code>[a-zA-Z0-9][a-zA-Z0-9_.\-/#]*</code>，小写；</li>
+<li>中文：连续汉字段的 <strong>字符 bigram</strong>（单字段保留单字）；</li>
+<li>过滤停用词与疑问词。</li>
+</ul>
+<p>同一 tokenizer 用于 BM25、稀疏向量、Mock Embedding 与 Mock Reranker，保证离线一致性。</p>
+<h3 id="4-3-稠密向量">4.3 稠密向量</h3>
+<ul>
+<li>真实模式：<code>POST {base}/embeddings</code>，模型 Qwen3-Embedding-8B；</li>
+<li>Mock 模式：512 维 hashing embedding：</li>
+<li>对每个 token 做 MD5，取前 4 字节映射到维度，第 5 字节决定符号；</li>
+<li>权重 <code>1 + ln(tf)</code>，L2 归一化；</li>
+<li>优点：确定性、零依赖；缺点：<strong>不具备真正语义泛化</strong>，仅用于离线闭环。</li>
+</ul>
+<p>相似度：余弦。</p>
+<h3 id="4-4-BM25">4.4 BM25</h3>
+<p>参数 <code>k1=1.5, b=0.75</code>：</p>
+<pre><code>IDF(t) = ln(1 + (N - df(t) + 0.5) / (df(t) + 0.5))
+score(q, d) = Σ_t IDF(t) * tf(t,d) * (k1 + 1)
+              / (tf(t,d) + k1 * (1 - b + b * |d| / avgdl))</code></pre>
+<p>其中 <code>N</code> 为 Chunk 数，<code>df</code> 为文档频率，<code>|d|</code> 为 Chunk token 数，<code>avgdl</code> 为平均长度。</p>
+<h3 id="4-5-稀疏向量">4.5 稀疏向量</h3>
+<p>模拟 BGE-M3 的学习型稀疏表示：</p>
+<pre><code>w(t) = (1 + ln tf(t)) * IDF(t)
+向量 L2 归一化
+score = cosine(query_weights, chunk_weights)</code></pre>
+<p>存储为 <code>[[token, weight], ...]</code>，查询时用同一 IDF 计算 query 权重。</p>
+<h3 id="4-6-RRF-融合">4.6 RRF 融合</h3>
+<p>每一路取前 50，按排名融合：</p>
+<pre><code>RRF(d) = Σ_r 1 / (60 + rank_r(d))</code></pre>
+<p><code>k=60</code>；同一 Chunk 在多路出现则累加。融合后取前 <code>max(24, top_k*4)</code> 进入精排。</p>
+<h3 id="4-7-精排">4.7 精排</h3>
+<ul>
+<li>真实模式：<code>POST {base}/rerank</code>，模型 Qwen3-Reranker-8B；</li>
+<li>Mock 模式：<code>0.62 * token 覆盖率 + 0.28 * 精确术语命中率 + 0.10 * 首段命中</code>；</li>
+<li>最终分：</li>
+</ul>
+<pre><code>final = 0.72 * normalize(rerank) + 0.28 * normalize(RRF)</code></pre>
+<p>若 rerank 全为常数，则退化为 RRF 排序。</p>
+<h3 id="4-8-索引落盘">4.8 索引落盘</h3>
+<pre><code>data/index/
+├── index.json    # RagIndex：版本、文档注册表、Chunk 清单、统计
+├── vectors.json  # {&quot;model&quot;: &quot;...&quot;, &quot;dim&quot;: 512, &quot;vectors&quot;: {chunk_id: [...]}}
+└── sparse.json   # {&quot;N&quot;:..., &quot;avgdl&quot;:..., &quot;df&quot;:..., &quot;vectors&quot;:..., &quot;tf&quot;:...}</code></pre>
+<ul>
+<li>增量建库：按文档内容哈希判断是否变更；未变更文档复用旧 Chunk；</li>
+<li>向量按 <code>chunk_id</code> 复用（内容寻址）；Embedding 模型变化时强制重算；</li>
+<li>删除文档时，其 Chunk 不再进入新索引；解析目录中的陈旧产物由 watcher 清理；</li>
+<li>索引版本：<code>YYYY.MM.DD-HHMMSS</code>，可用于回滚与审计。</li>
+</ul>
+<h3 id="4-9-评估-test-模式">4.9 评估（test 模式）</h3>
+<p><code>evaluate(index_dir, test_set, top_k=6)</code>：</p>
+<ul>
+<li>每个用例：<code>question</code> / <code>expected_docs</code> / <code>expected_keywords</code> / <code>category?</code>；</li>
+<li><code>recall@k = 命中期望文档数 / 期望文档数</code>；</li>
+<li><code>hit_rate = 是否至少命中一个期望文档</code>；</li>
+<li><code>MRR = 1 / 首个相关结果排名</code>；</li>
+<li><code>keyword_hit_rate = 命中关键词数 / 关键词数</code>；</li>
+<li>输出 per-case + summary，落盘 JSON。</li>
+</ul>
+<hr>
+<h2 id="5-Agent-层">5. Agent 层</h2>
+<h3 id="5-1-问答主流程">5.1 问答主流程</h3>
+<pre><code>answer_question(question, index_dir, max_rounds=2, top_k=6, category=None) -&gt; Answer</code></pre>
+<ol>
+<li><strong>意图分类</strong>：command / flow / version / troubleshoot / term / concept；</li>
+<li><strong>Query 构造</strong>：原问题 + 去疑问词/标点改写 + ASCII 术语补充；</li>
+<li><strong>检索</strong>：每个 query 调 DocBase，多 query 结果按 chunk_id 合并（取高分、RRF 累加）；</li>
+<li><strong>充足性自评</strong>：</li>
+</ol>
+<ul>
+<li>最高 <code>rerank_score &gt;= 0.20</code>；</li>
+<li>问题 token 在 Top-3 Chunk 中的覆盖率 <code>&gt;= 0.30</code>；</li>
+<li>不满足则用 Top-1 的标题扩展 query，进入第二轮；</li>
+</ul>
+<ol>
+<li><strong>生成</strong>：</li>
+</ol>
+<ul>
+<li>真实模式：GLM-5.1，严格 system prompt；</li>
+<li>Mock 模式：抽取式合成（结论 + 步骤/表格/句子 + 引用）；</li>
+</ul>
+<ol>
+<li><strong>结构化</strong>：流程类附加 Mermaid；命令/参数类附表格；版本类附特性表；</li>
+<li><strong>引用重编号</strong>：只保留回答正文实际使用的引用，按首次出现重排 <code>[n]</code>；</li>
+<li><strong>返回</strong> <code>Answer</code>。</li>
+</ol>
+<h3 id="5-2-意图与检索策略">5.2 意图与检索策略</h3>
+<table>
+<thead><tr><th>意图</th><th>触发词示例</th><th>优先证据形态</th></tr></thead>
+<tbody>
+<tr><td>command</td><td>命令、参数、配置、操作、CLI</td><td>命令表、注意事项</td></tr>
+<tr><td>flow</td><td>流程、步骤、转发、接续、时序</td><td>编号步骤、Mermaid</td></tr>
+<tr><td>version</td><td>版本、特性、发布、变更</td><td>特性表</td></tr>
+<tr><td>troubleshoot</td><td>故障、排查、失败、告警</td><td>排查步骤</td></tr>
+<tr><td>term</td><td>含型号/英文术语</td><td>术语定义、命令</td></tr>
+<tr><td>concept</td><td>其他</td><td>段落/列表</td></tr>
+</tbody></table>
+<h3 id="5-3-抽取式合成规则">5.3 抽取式合成规则</h3>
+<p>Mock 模式不调用 Chat，仍要保证可读与可核对：</p>
+<ul>
+<li><strong>流程</strong>：取原文编号步骤 3 条以上 → 作为「关键依据」；原文有 Mermaid 则重绘；</li>
+<li><strong>排障</strong>：取编号步骤，结论为「建议按以下步骤排查」；</li>
+<li><strong>命令</strong>：选含「命令/反引号/reset」的句子作结论，附执行前注意事项；</li>
+<li><strong>参数</strong>：优先表格行，结论取参数定义句；</li>
+<li><strong>版本</strong>：取「新增特性」表行，按 <code>特性：说明（受益场景）</code> 格式化；</li>
+<li><strong>概念</strong>：按 query token 覆盖率选句，去重后输出。</li>
+</ul>
+<h3 id="5-4-引用策略">5.4 引用策略</h3>
+<ul>
+<li>每个 <code>[n]</code> 对应一个真实 <code>Chunk</code>；</li>
+<li><code>Citation</code> 字段：<code>ref / doc_id / doc_name / page / heading / snippet / source_uri / source_path / figure</code>；</li>
+<li>图片优先使用 <code>ImageInfo.source_uri</code>（带 <code>#page=&amp;figure=</code>）；</li>
+<li>回答正文只保留实际出现的引用，<code>溯源</code> 段按新编号重建；</li>
+<li>无依据时 <code>citations=[]</code>，明确输出「无据不答」。</li>
+</ul>
+<h3 id="5-5-Prompt-约束">5.5 Prompt 约束</h3>
+<pre><code>你是 DocQA……
+1. 存在性：本仓库配备 DocBase 库，回答前必须先检索；
+2. 查询策略：技术名词优先精确检索，原理/流程优先语义检索；
+3. 溯源强制：每个结论标注 [n]，给出文档名/页码/图号；不足时回答「无据不答」，禁止编造；
+4. 产出形式：流程类给出 Mermaid，并提示与原图对照。
+只依据提供资料回答。</code></pre>
+<hr>
+<h2 id="6-服务化入口">6. 服务化入口</h2>
+<h3 id="6-1-CLI">6.1 CLI</h3>
+<table>
+<thead><tr><th>命令</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>parse</code></td><td>解析单文件/目录</td></tr>
+<tr><td><code>build</code></td><td>建库（<code>--incremental</code>）</td></tr>
+<tr><td><code>query</code></td><td>只检索，显示三路分数</td></tr>
+<tr><td><code>ask</code></td><td>检索 + 生成 + 溯源；<code>--show-trace</code></td></tr>
+<tr><td><code>eval</code></td><td>recall@k / hit_rate / MRR</td></tr>
+<tr><td><code>serve</code></td><td>Web 问答</td></tr>
+<tr><td><code>watch</code></td><td>目录监控 + 增量更新</td></tr>
+<tr><td><code>demo</code></td><td>一键跑通</td></tr>
+<tr><td><code>doctor</code></td><td>环境/模型/索引检查</td></tr>
+</tbody></table>
+<h3 id="6-2-Web-API">6.2 Web API</h3>
+<table>
+<thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td><code>/api/health</code></td><td>存活检查</td></tr>
+<tr><td>GET</td><td><code>/api/stats</code></td><td>索引统计、文档列表、模型模式</td></tr>
+<tr><td>GET</td><td><code>/api/doc?doc_id=&amp;mode=parsed</code></td><td>查看解析后原文</td></tr>
+<tr><td>GET</td><td><code>/api/search?q=&amp;top_k=</code></td><td>只检索</td></tr>
+<tr><td>POST</td><td><code>/api/ask</code></td><td><code>{question, top_k?, max_rounds?, category?}</code> → <code>WebQueryResponse</code></td></tr>
+</tbody></table>
+<p><code>WebQueryResponse</code> 与 <code>answer_question</code> 对齐：<code>answer / format / citations / rounds_used / sufficient / elapsed_ms / trace / mermaid</code>。</p>
+<h3 id="6-3-Watcher">6.3 Watcher</h3>
+<ul>
+<li>轮询目录（默认 10 s），比较 <code>(mtime, size)</code> 快照；</li>
+<li>变更文件调用 <code>parse_document</code>，删除文件清理对应解析目录；</li>
+<li>每轮调用 <code>build_index(incremental=True)</code>；</li>
+<li>事件写 <code>data/watch.log</code>（JSONL）；</li>
+<li><code>--once</code> 便于测试与手工触发。</li>
+</ul>
+<hr>
+<h2 id="7-数据契约汇总">7. 数据契约汇总</h2>
+<h3 id="7-1-doc2md">7.1 doc2md</h3>
+<table>
+<thead><tr><th>契约</th><th>关键字段</th></tr></thead>
+<tbody>
+<tr><td><code>ImageInfo</code></td><td>image_id, doc_name, page, figure_index, title, path, kind, width, height, description, caption, source_ref, source_uri, vl_model, vl_mode</td></tr>
+<tr><td><code>ParseTask</code></td><td>task_id, src, out_dir, doc_type, category, vl_mode, options, created_at</td></tr>
+<tr><td><code>ParseResult</code></td><td>task, doc_id, doc_name, markdown_path, manifest_path, assets_dir, images, warnings, stats, pages, page_mode, source_uri</td></tr>
+</tbody></table>
+<h3 id="7-2-docbase">7.2 docbase</h3>
+<table>
+<thead><tr><th>契约</th><th>关键字段</th></tr></thead>
+<tbody>
+<tr><td><code>Chunk</code></td><td>chunk_id, doc_id, doc_name, heading, text, page, category, source_path, source_uri, order, images, content_hash, char_count</td></tr>
+<tr><td><code>RagIndex</code></td><td>version, created_at, updated_at, embedding_model, rerank_model, chunk_size, overlap, docs, chunks, stats, schema_version</td></tr>
+<tr><td><code>QueryHit</code></td><td>chunk, score, rerank_score, dense_score, bm25_score, sparse_score, rrf_score, rank, routes</td></tr>
+<tr><td><code>QueryResult</code></td><td>query, hits, latency_ms, route_stats, warnings, index_version, category</td></tr>
+</tbody></table>
+<h3 id="7-3-agent-web">7.3 agent / web</h3>
+<table>
+<thead><tr><th>契约</th><th>关键字段</th></tr></thead>
+<tbody>
+<tr><td><code>Citation</code></td><td>ref, doc_id, doc_name, page, heading, snippet, source_uri, source_path, figure</td></tr>
+<tr><td><code>Answer</code></td><td>question, answer, format, citations, rounds_used, sufficient, queries, trace, mermaid, elapsed_ms, index_version, model_mode, warnings</td></tr>
+<tr><td><code>WebQueryResponse</code></td><td>question, answer, format, citations, rounds_used, sufficient, elapsed_ms, index_version, model_mode, trace, mermaid, warnings</td></tr>
+</tbody></table>
+<p><strong>兼容规则</strong>：新增字段必须带默认值；不得重命名/删除既有字段；如需破坏性变更，提升 <code>schema_version</code> 并提供迁移脚本。</p>
+<hr>
+<h2 id="8-模型端点协议">8. 模型端点协议</h2>
+<h3 id="8-1-配置">8.1 配置</h3>
+<pre><code>DOCQA_MODEL_MODE=http
+DOCQA_BASE_URL=https://model-gateway.example.com/v1
+DOCQA_API_KEY=***
+DOCQA_CHAT_MODEL=GLM-5.1
+DOCQA_VL_MODEL=Qwen3.6-27B-VL
+DOCQA_EMBED_MODEL=Qwen3-Embedding-8B
+DOCQA_RERANK_MODEL=Qwen3-Reranker-8B</code></pre>
+<h3 id="8-2-端点约定">8.2 端点约定</h3>
+<table>
+<thead><tr><th>能力</th><th>方法</th><th>路径</th><th>响应关键字段</th></tr></thead>
+<tbody>
+<tr><td>Chat</td><td>POST</td><td><code>/chat/completions</code></td><td><code>choices[0].message.content</code></td></tr>
+<tr><td>VL</td><td>POST</td><td><code>/chat/completions</code></td><td>同上（content 含 image_url）</td></tr>
+<tr><td>Embedding</td><td>POST</td><td><code>/embeddings</code></td><td><code>data[].embedding</code></td></tr>
+<tr><td>Rerank</td><td>POST</td><td><code>/rerank</code></td><td><code>results[].{index, relevance_score}</code></td></tr>
+</tbody></table>
+<ul>
+<li>任一调用失败：记录 warning，后续请求自动切换 Mock（<code>_http_failed</code>），避免反复超时；</li>
+<li>端点不含 <code>/v1</code> 时由 <code>BASE_URL</code> 自行配置；代码只拼接相对路径；</li>
+<li>不在代码/日志中输出 API Key。</li>
+</ul>
+<h3 id="8-3-Mock-边界-必须明示">8.3 Mock 边界（必须明示）</h3>
+<p>Mock 仅保证：</p>
+<ul>
+<li>端到端链路可跑通；</li>
+<li>单元/集成测试可复现；</li>
+<li>输出格式与真实模式一致。</li>
+</ul>
+<p>Mock <strong>不保证</strong>：</p>
+<ul>
+<li>语义泛化能力；</li>
+<li>真实图片理解能力；</li>
+<li>生产检索质量指标。</li>
+</ul>
+<p>因此项目书中的 1.0 指标仅对演示集与 Mock 链路负责；生产上线必须切换真实端点并重建索引。</p>
+<hr>
+<h2 id="9-安全与隐私">9. 安全与隐私</h2>
+<table>
+<thead><tr><th>面</th><th>措施</th></tr></thead>
+<tbody>
+<tr><td>数据</td><td>文档、索引、图片全部落在本机 <code>data/</code>；不上传公网</td></tr>
+<tr><td>模型</td><td>仅调用配置的内部端点；默认 Mock 不发起网络请求</td></tr>
+<tr><td>Web</td><td>默认绑定 <code>127.0.0.1</code>；文档读取只按 <code>doc_id</code> 查注册表，不接受任意路径</td></tr>
+<tr><td>密钥</td><td>只读环境变量；不写入索引/日志/前端</td></tr>
+<tr><td>依赖</td><td>运行时标准库；PDF 仅可选 pypdf；减少供应链面</td></tr>
+<tr><td>审计</td><td><code>trace</code> 记录 query、命中数、覆盖率、耗时；<code>watch.log</code> 记录变更</td></tr>
+</tbody></table>
+<hr>
+<h2 id="10-性能与容量">10. 性能与容量</h2>
+<table>
+<thead><tr><th>环节</th><th>当前实现</th><th>复杂度/备注</th></tr></thead>
+<tbody>
+<tr><td>解析</td><td>逐文件、逐页</td><td>线性；VL 调用是主要时延</td></tr>
+<tr><td>切片</td><td>线性扫描</td><td>O(字符数)</td></tr>
+<tr><td>建库</td><td>批量 embedding（16/批）</td><td>线性；增量复用</td></tr>
+<tr><td>稠密召回</td><td>全量余弦</td><td>O(N·d)；万级 Chunk 可换向量库</td></tr>
+<tr><td>BM25</td><td>倒排 tf/df</td><td>O(查询词 × 候选)</td></tr>
+<tr><td>稀疏</td><td>稀疏点积</td><td>O(非零项)</td></tr>
+<tr><td>精排</td><td>候选 24–40 条</td><td>真实 Reranker 时延为主</td></tr>
+<tr><td>存储</td><td>JSON</td><td>演示 32 块约 0.6 MB；规模大时换 SQLite/向量库</td></tr>
+</tbody></table>
+<p>演示数据：5 文档 / 32 Chunk / 3 图片；Mock 检索约 2 ms，问答约 9–15 ms。</p>
+<hr>
+<h2 id="11-扩展点">11. 扩展点</h2>
+<ol>
+<li><strong>PDF 矢量图渲染</strong>：接入 PyMuPDF，对含 drawings 的页面渲染为位图后送 VL；保持 <code>ImageInfo</code> 契约不变。</li>
+<li><strong>向量库替换</strong>：<code>Retriever</code> 的稠密召回替换为 FAISS/Milvus/pgvector，接口仍返回 <code>{chunk_id: score}</code>。</li>
+<li><strong>真实 BGE-M3 稀疏</strong>：将 <code>sparse.json</code> 的模拟权重替换为模型输出的 <code>{token: weight}</code>，RRF/精排不变。</li>
+<li><strong>无头 Agent 服务</strong>：<code>web.server</code> 的 <code>/api/ask</code> 内部改调 <code>claude -p</code> / <code>nga run</code>，<code>WebQueryResponse</code> 不变。</li>
+<li><strong>多用户/权限</strong>：在入口层增加租户与 ACL；索引按租户分区；下层契约不变。</li>
+<li><strong>OCR 兜底</strong>：扫描版 PDF 先走 OCR（PaddleOCR/Tesseract），再走现有解析链路。</li>
+</ol>
+<hr>
+<h2 id="12-已知限制">12. 已知限制</h2>
+<ul>
+<li><code>.doc</code>（OLE 旧格式）未直接支持，需先转 <code>.docx</code>；</li>
+<li>DOCX 无固定分页，页码为估算值，已在 <code>page_mode</code> 与回答中标注；</li>
+<li>矢量图（EMF/WMF/SVG/TIFF）当前跳过读图并告警；</li>
+<li>Mock Embedding 基于词面哈希，不等价于语义模型；</li>
+<li>演示语料为虚构的 FE_HEART 场景，仅用于验证系统能力，不代表真实产品文档；</li>
+<li>Web 为单机本地服务，未做多用户鉴权与并发压测。</li>
+</ul>
+<hr>
+<h2 id="13-测试策略">13. 测试策略</h2>
+<table>
+<thead><tr><th>层级</th><th>用例</th><th>断言</th></tr></thead>
+<tbody>
+<tr><td>doc2md</td><td>Markdown 图文解析、重复解析、TXT、最小 DOCX、最小 PPTX</td><td>页码/图序/命名/释义/manifest</td></tr>
+<tr><td>docbase</td><td>建库、三路召回、精确术语、分类过滤、评估、增量更新</td><td>命中文档、页码、指标、更新计数</td></tr>
+<tr><td>agent</td><td>流程问答、命令问答、无据拒答、契约字段、意图分类</td><td>引用、Mermaid、<code>sufficient</code>、字段</td></tr>
+<tr><td>web</td><td>静态页、stats、ask、doc</td><td>HTTP 200、JSON 契约、原文内容</td></tr>
+</tbody></table>
+<p>执行：</p>
+<pre><code>make test
+# 或
+PYTHONPATH=src:tests python3 -m unittest discover -s tests -v</code></pre>
+<p>当前 19 项全部通过。</p>
+<div class="footer-note">DocQA · 基于 AI Agent 的个人本地多模态文档智能问答系统 · 井永乐 | 00587807 · 2026-07-30</div>
+</body>
+</html>

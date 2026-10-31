@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DocQA · 项目汇报</title>
+<style>
+  :root {
+    --navy: #0b2a5b;
+    --navy-2: #123f78;
+    --blue: #1f6fd0;
+    --blue-2: #2f86cf;
+    --teal: #0f8a7e;
+    --green: #2f8f5b;
+    --orange: #c2410c;
+    --muted: #5f7488;
+    --line: #c9dcea;
+    --soft: #eef6fb;
+    --panel: rgba(255, 255, 255, .82);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; }
+  body {
+    background: #07131f;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    color: var(--navy);
+    overflow: hidden;
+  }
+  .viewport { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .stage { width: 1600px; height: 900px; position: relative; transform-origin: center center; flex: 0 0 auto; }
+
+  .slide {
+    position: absolute; inset: 0; width: 1600px; height: 900px; display: none;
+    overflow: hidden; background:
+      radial-gradient(900px 500px at 92% -10%, rgba(31,111,208,.10), transparent 60%),
+      radial-gradient(700px 500px at -8% 110%, rgba(15,138,126,.08), transparent 60%),
+      linear-gradient(135deg, #f5fafd 0%, #edf5fb 55%, #e9f2f9 100%);
+  }
+  .slide.active { display: block; }
+  .slide::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(31,111,208,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(31,111,208,.045) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: linear-gradient(180deg, rgba(0,0,0,.5), transparent 78%);
+  }
+  .slide::after {
+    content: ""; position: absolute; right: -180px; top: -220px; width: 620px; height: 620px;
+    border-radius: 50%; border: 1px solid rgba(31,111,208,.13); pointer-events: none;
+  }
+  .slide-inner {
+    position: relative; z-index: 1; height: 100%; padding: 42px 58px 30px;
+    display: flex; flex-direction: column;
+  }
+  .kicker {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 1.4px;
+    color: var(--teal); font-weight: 700; text-transform: uppercase;
+  }
+  .kicker::before { content: ""; width: 22px; height: 2px; background: var(--teal); }
+  .head-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+  .title { font-size: 40px; line-height: 1.18; letter-spacing: .4px; color: var(--navy); margin-top: 7px; }
+  .subtitle { font-size: 16px; color: var(--muted); margin-top: 7px; letter-spacing: .2px; }
+  .head-note {
+    font-size: 11px; color: #6f879b; border: 1px solid #cfe2ef; background: rgba(255,255,255,.72);
+    border-radius: 999px; padding: 6px 12px; white-space: nowrap;
+  }
+  .foot {
+    margin-top: auto; padding-top: 9px; border-top: 1px solid rgba(117,151,178,.25);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10.5px; color: #8096a8; letter-spacing: .2px;
+  }
+  .foot b { color: #4f6b82; font-weight: 600; }
+  .page-no { font-variant-numeric: tabular-nums; }
+  .page-no b { color: var(--blue); font-size: 12px; }
+
+  /* ------------------------------------------------------------ components */
+  .panel {
+    background: var(--panel); border: 1px solid rgba(157,190,214,.62); border-radius: 13px;
+    box-shadow: 0 10px 26px rgba(20,68,105,.055); padding: 12px 14px;
+  }
+  .panel-title {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;
+    color: #0f3b67; letter-spacing: .2px; margin-bottom: 8px;
+  }
+  .panel-title .dot { width: 7px; height: 7px; border-radius: 2px; background: var(--blue); }
+  .panel-title.teal .dot { background: var(--teal); }
+  .panel-title.green .dot { background: var(--green); }
+  .panel-title.orange .dot { background: var(--orange); }
+  .panel-title .tag {
+    margin-left: auto; font-size: 9.5px; font-weight: 600; color: #27658f;
+    background: #e9f4fc; border-radius: 999px; padding: 3px 8px;
+  }
+  .muted { color: var(--muted); }
+  .small { font-size: 10.5px; line-height: 1.55; }
+  .tiny { font-size: 9.5px; line-height: 1.5; }
+  .flow { display: flex; align-items: center; gap: 6px; }
+  .node {
+    background: #fff; border: 1px solid #c7dceb; border-radius: 8px; padding: 7px 8px;
+    text-align: center; flex: 1 1 0; min-width: 0; box-shadow: 0 2px 6px rgba(20,68,105,.035);
+  }
+  .node b { display: block; font-size: 11.5px; color: #103a60; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .node span { display: block; font-size: 9px; color: #73899c; margin-top: 3px; line-height: 1.35; }
+  .node.blue { border-top: 2px solid #2f7fd1; }
+  .node.teal { border-top: 2px solid var(--teal); }
+  .node.green { border-top: 2px solid var(--green); }
+  .node.orange { border-top: 2px solid var(--orange); }
+  .node.hl { background: #eaf6f4; border-color: #b9ded8; }
+  .arrow { flex: 0 0 14px; height: 2px; background: #9bbbd4; position: relative; }
+  .arrow::after {
+    content: ""; position: absolute; right: -1px; top: -4px;
+    border: 5px solid transparent; border-left-color: #9bbbd4;
+  }
+  .arrow.down { width: 2px; height: 16px; flex: 0 0 16px; }
+  .arrow.down::after { right: -4px; top: auto; bottom: -1px; border-left-color: transparent; border-top-color: #9bbbd4; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; border-radius: 999px;
+    font-size: 10px; padding: 4px 9px; border: 1px solid #cfe2ef; background: #f4fafd; color: #3c678b;
+  }
+  .chip.blue { background: #eaf4fc; color: #1f6fb2; border-color: #c8e0f2; }
+  .chip.teal { background: #eaf7f4; color: #0f7a71; border-color: #c4e6df; }
+  .chip.green { background: #edf7f0; color: #2f7c51; border-color: #c9e6d2; }
+  .chip.orange { background: #fdf3e9; color: #a85a16; border-color: #f0d6bd; }
+  .badge { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .3px; border-radius: 4px; padding: 2px 6px; }
+  .badge.must { background: #e7f3fc; color: #1f6fb2; }
+  .badge.done { background: #e8f7ef; color: #2b7f50; }
+  .badge.opt { background: #fdf2e6; color: #b0661b; }
+  .badge.core { background: #eaf7f4; color: #0f7a71; }
+  code, .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+
+  /* ---------------------------------------------------------------- cover */
+  .cover { background: linear-gradient(135deg, #f7fbfe 0%, #e9f4fb 45%, #e5f0f8 100%); }
+  .cover .slide-inner { padding: 48px 90px 84px; align-items: center; text-align: center; justify-content: center; }
+  .cover .award {
+    margin-top: 4px; display: inline-flex; align-items: center; gap: 10px;
+    border: 1.5px solid #7fb3d8; color: #1b5e93; background: rgba(255,255,255,.6);
+    font-size: 14px; font-weight: 600; border-radius: 999px; padding: 8px 26px; letter-spacing: .8px;
+  }
+  .cover .award::before, .cover .award::after { content: "·"; color: #5a97c3; }
+  .cover h1 { font-size: 55px; line-height: 1.28; color: #0b2a5b; margin-top: 26px; letter-spacing: 1px; }
+  .cover h1 em { font-style: normal; color: #0f3f78; }
+  .cover .rule { width: 112px; height: 4px; border-radius: 4px; margin: 12px auto 14px; background: linear-gradient(90deg, #1f6fd0, #0f8a7e); }
+  .cover .sub { font-size: 20px; color: #20557f; letter-spacing: .4px; }
+  .cover .sub b { color: #0f7a71; }
+  .cover .abstract {
+    width: 1260px; text-align: left; margin-top: 24px; border-radius: 12px;
+    background: linear-gradient(180deg, #eaf5fc, #f3fafe); border: 1.5px solid #8fc0e2;
+    padding: 13px 22px 14px; box-shadow: 0 8px 22px rgba(24,84,130,.07);
+  }
+  .cover .abstract h3 { font-size: 13px; color: #1f6fb2; letter-spacing: 1px; margin-bottom: 6px; text-align: center; }
+  .cover .abstract p { font-size: 13.5px; line-height: 1.75; color: #274b69; }
+  .cover .tech { margin-top: 18px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; justify-content: center; }
+  .cover .tech .label { font-size: 12px; color: #5d7d95; margin-right: 3px; letter-spacing: 1px; }
+  .cover .tech .chip { font-size: 12px; padding: 6px 15px; border-radius: 999px; font-weight: 500; }
+  .cover .models {
+    margin-top: 12px; display: flex; gap: 10px; align-items: center; justify-content: center;
+    border: 1px solid #cfe2ef; background: rgba(255,255,255,.55); border-radius: 9px;
+    padding: 7px 16px; font-size: 11px; color: #5f7d94;
+  }
+  .cover .models b { color: #245b86; font-weight: 600; }
+  .cover .models span { color: #2b6f9b; }
+  .cover .pillars { display: flex; gap: 10px; margin-top: 14px; justify-content: center; }
+  .cover .pillars span { font-size: 10px; color: #527897; border: 1px solid #cfe2ef; background: rgba(255,255,255,.62); border-radius: 999px; padding: 5px 12px; }
+  .cover .pillars span::before { content: "✓"; color: #0f8a7e; margin-right: 5px; font-weight: 700; }
+  .cover .credits { position: absolute; left: 90px; right: 90px; bottom: 30px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #7890a2; border-top: 1px solid rgba(117,151,178,.3); padding-top: 10px; }
+  .cover .credits b { color: #355d7b; font-weight: 500; }
+
+  /* ---------------------------------------------------------- architecture */
+  .layer {
+    display: grid; grid-template-columns: 188px 1fr 176px; gap: 12px; align-items: stretch;
+    border-radius: 12px; padding: 16px 14px; background: rgba(255,255,255,.62);
+    border: 1px solid rgba(150,187,214,.65); position: relative;
+  }
+  .layer + .layer { margin-top: 19px; }
+  .layer-label {
+    border-radius: 9px; padding: 9px 11px; color: #fff; display: flex; flex-direction: column;
+    justify-content: center; gap: 4px; min-width: 0;
+  }
+  .layer-label .no { font-size: 10px; opacity: .8; letter-spacing: 1px; }
+  .layer-label b { font-size: 16px; letter-spacing: .2px; }
+  .layer-label small { font-size: 9.5px; line-height: 1.45; opacity: .82; }
+  .layer-label .url { font-size: 8px; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .l1 .layer-label { background: linear-gradient(145deg, #2f7fd1, #1b5b9e); }
+  .l2 .layer-label { background: linear-gradient(145deg, #0f8f84, #0b6c64); }
+  .l3 .layer-label { background: linear-gradient(145deg, #d9822b, #b45309); }
+  .layer-flow { display: flex; align-items: center; gap: 5px; min-width: 0; }
+  .layer-flow .node { padding: 10px 6px; }
+  .layer-flow .node b { font-size: 10.5px; white-space: normal; }
+  .layer-flow .node span { font-size: 8.5px; white-space: normal; }
+  .out {
+    display: flex; flex-direction: column; justify-content: center; gap: 4px;
+    background: #fbfdff; border: 1px dashed #b9d4e7; border-radius: 8px; padding: 8px 9px;
+  }
+  .out em { font-style: normal; font-size: 8.5px; color: #8aa0b2; letter-spacing: .6px; }
+  .out b { font-size: 10px; line-height: 1.45; color: #285879; font-weight: 600; }
+  .out.l3 b { color: #9a4a15; }
+  .layer-link { height: 15px; display: flex; justify-content: center; align-items: center; }
+  .layer-link span { width: 2px; height: 15px; background: #9bbbd4; position: relative; }
+  .layer-link span::after { content: ""; position: absolute; bottom: -1px; left: -4px; border: 5px solid transparent; border-top-color: #9bbbd4; }
+  .arch-note { margin-top: 13px; display: flex; justify-content: space-between; font-size: 10.5px; color: #6f879a; }
+  .arch-bottom { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .arch-bottom .ab { border: 1px solid #cfe2ef; background: rgba(255,255,255,.72); border-radius: 9px; padding: 10px 13px; }
+  .arch-bottom .ab em { font-style: normal; display: block; font-size: 8.5px; letter-spacing: .8px; color: #7a90a2; margin-bottom: 2px; }
+  .arch-bottom .ab b { display: block; font-size: 11px; color: #14507d; }
+  .arch-bottom .ab span { display: block; font-size: 8.8px; color: #7a90a2; margin-top: 2px; }
+
+  /* --------------------------------------------------------------- logical */
+  .logical { flex: 1; display: grid; grid-template-columns: 1fr 322px; gap: 12px; margin-top: 10px; min-height: 0; }
+  .logical-left { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .entry-row { display: flex; gap: 8px; align-items: stretch; }
+  .entry-box {
+    flex: 1; background: #fff; border: 1px solid #c9ddec; border-radius: 8px; padding: 7px 10px;
+    display: flex; align-items: center; gap: 8px; font-size: 10.5px; color: #3b617f;
+  }
+  .entry-box b { font-size: 11.5px; color: #123d63; white-space: nowrap; }
+  .entry-box .badge { margin-left: auto; }
+  .legend { display: flex; gap: 10px; align-items: center; font-size: 9px; color: #72899c; padding-left: 4px; }
+  .legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 3px; vertical-align: -1px; }
+  .agent-panel { padding: 8px 10px; }
+  .agent-panel .flow { gap: 5px; }
+  .agent-panel .node { padding: 5px 4px; }
+  .agent-panel .node b { font-size: 10px; white-space: normal; }
+  .agent-panel .node span { font-size: 8.2px; }
+  .constraint { margin-top: 5px; font-size: 8.8px; color: #9a4a15; background: #fdf6ec; border: 1px solid #efd9c2; border-radius: 4px; padding: 3px 7px; }
+  .constraint b { color: #b45309; }
+  .rag-panel { padding: 8px 10px; }
+  .rag-line { display: flex; align-items: center; gap: 6px; }
+  .route-stack { flex: 1.35; display: flex; flex-direction: column; gap: 4px; }
+  .route {
+    border: 1px solid #c9ddec; background: #fff; border-radius: 6px; padding: 4px 8px;
+    font-size: 9px; color: #5f788e; line-height: 1.35;
+  }
+  .route b { color: #154c76; font-size: 10px; margin-right: 4px; }
+  .mini-card {
+    flex: .72; border: 1px solid #b9d9ef; background: #edf7fd; border-radius: 7px; padding: 6px 5px;
+    text-align: center; font-size: 9.5px; color: #205f8f; line-height: 1.3;
+  }
+  .mini-card b { display: block; font-size: 10.5px; color: #11436d; margin-bottom: 2px; }
+  .mini-card.teal { background: #eaf7f4; border-color: #b9ded8; color: #0f6f66; }
+  .mini-card.green { background: #eef8f1; border-color: #c6e5d0; color: #2f7c51; }
+  .mini-card.orange { background: #fdf5ec; border-color: #eed6bd; color: #a85a16; }
+  .rag-foot { margin-top: 5px; display: flex; justify-content: space-between; gap: 6px; font-size: 8.5px; color: #7a91a4; }
+  .rag-foot b { color: #1f6fb2; }
+  .bottom-pair { display: grid; grid-template-columns: 1fr 1.06fr; gap: 8px; flex: 1; min-height: 0; }
+  .bottom-pair .panel { padding: 8px 10px; }
+  .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .asset { border: 1px solid #d2e3ef; background: #fff; border-radius: 6px; padding: 5px 7px; }
+  .asset b { display: block; font-size: 9.8px; color: #174c74; }
+  .asset span { display: block; font-size: 8.3px; color: #7a90a2; margin-top: 2px; line-height: 1.35; }
+  .parser-flow { display: flex; align-items: center; gap: 4px; }
+  .parser-flow .node { padding: 4px 3px; }
+  .parser-flow .node b { font-size: 9px; white-space: normal; }
+  .parser-flow .node span { font-size: 7.5px; }
+  .parser-note { margin-top: 5px; font-size: 8.4px; color: #6f879a; line-height: 1.45; }
+  .parser-note b { color: #0f7a71; }
+  .quote-demo { margin-top: 6px; border-left: 2px solid #7fc4bb; background: #f2fbf8; padding: 5px 8px; font-size: 8.1px; color: #587a78; line-height: 1.5; border-radius: 0 4px 4px 0; }
+  .deploy { display: flex; flex-direction: column; gap: 4px; }
+  .deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .deploy-grid span { font-size: 8.2px; color: #5f788e; background: #f4fafd; border: 1px solid #d8e8f2; border-radius: 4px; padding: 3px 5px; }
+  .asset-flow { margin-top: 6px; display: flex; align-items: center; gap: 4px; font-size: 7.6px; color: #5f788e; }
+  .asset-flow span { background: #f4fafd; border: 1px solid #d8e8f2; border-radius: 4px; padding: 2px 4px; white-space: nowrap; }
+  .asset-flow i { font-style: normal; color: #9bbbd4; }
+  .obs { display: flex; flex-direction: column; gap: 3px; }
+  .obs div { display: flex; gap: 6px; font-size: 8px; color: #6f879a; line-height: 1.4; }
+  .obs b { flex: 0 0 56px; color: #14507d; font-size: 8px; }
+  .asset-stats { margin-top: 6px; display: flex; gap: 5px; }
+  .asset-stats span { flex: 1; text-align: center; background: #fff; border: 1px solid #d8e8f2; border-radius: 4px; padding: 3px 2px; font-size: 7.4px; color: #7a90a2; }
+  .asset-stats b { display: block; font-size: 12px; color: #1f6fb2; }
+  .security { display: flex; flex-direction: column; gap: 3px; }
+  .security div { font-size: 8px; color: #6f879a; line-height: 1.4; padding-left: 8px; position: relative; }
+  .security div::before { content: ""; position: absolute; left: 0; top: 5px; width: 3px; height: 3px; border-radius: 50%; background: #7fb09c; }
+  .quality-snap { display: flex; gap: 5px; }
+  .quality-snap div { flex: 1; text-align: center; background: #fff; border: 1px solid #d8e8f2; border-radius: 4px; padding: 3px 2px; }
+  .quality-snap b { display: block; font-size: 12px; color: #0f8a7e; }
+  .quality-snap span { display: block; font-size: 7px; color: #7a90a2; }
+  .logical-right { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .logical-right .panel { padding: 8px 10px; }
+  .model-row { display: flex; gap: 6px; align-items: flex-start; padding: 5px 0; border-bottom: 1px dashed #dce9f3; }
+  .model-row:last-child { border-bottom: 0; }
+  .model-row .ico { width: 20px; height: 20px; border-radius: 5px; background: #eaf4fc; color: #1f6fb2; font-size: 8px; display: flex; align-items: center; justify-content: center; flex: 0 0 20px; }
+  .model-row b { display: block; font-size: 9.5px; color: #16476e; }
+  .model-row span { display: block; font-size: 8px; color: #7a90a2; line-height: 1.35; margin-top: 1px; }
+  .optional-row { display: flex; gap: 6px; }
+  .optional-row .opt {
+    flex: 1; border: 1px dashed #d9b892; background: #fdf8f2; border-radius: 6px; padding: 6px 7px;
+    font-size: 8.3px; color: #8a5a2c; line-height: 1.4;
+  }
+  .optional-row .opt b { display: block; font-size: 9px; color: #a85a16; margin-bottom: 2px; }
+  .trace-box {
+    margin-top: auto; border-radius: 9px; padding: 10px 12px; color: #fff;
+    background: linear-gradient(140deg, #123f78, #0f5d77 70%, #0f7a71);
+    box-shadow: 0 10px 24px rgba(15,65,100,.22);
+  }
+  .trace-box h4 { font-size: 11px; letter-spacing: .6px; margin-bottom: 4px; }
+  .trace-box p { font-size: 9.2px; line-height: 1.6; color: #cde5f2; }
+  .trace-box .path { margin-top: 5px; font-size: 8.6px; color: #9fd3d0; }
+
+  /* ------------------------------------------------------------ dev view */
+  .dev-grid { flex: 1; display: grid; grid-template-columns: 1.08fr .92fr 1.08fr; gap: 12px; margin-top: 12px; min-height: 0; }
+  .dev-col { display: flex; flex-direction: column; gap: 9px; min-height: 0; }
+  .tree {
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 9.7px; line-height: 1.56;
+    color: #3f5d74; background: #fbfdff; border: 1px solid #d6e6f1; border-radius: 7px;
+    padding: 8px 9px; white-space: pre; overflow: hidden; flex: 1;
+  }
+  .tree b { color: #0f5b8f; font-weight: 600; }
+  .tree em { font-style: normal; color: #9a4a15; }
+  .change-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .change-list span { font-size: 8.2px; color: #4f6d85; background: #f2f8fc; border: 1px solid #d4e5f1; border-radius: 4px; padding: 2px 5px; }
+  .dep { display: flex; flex-direction: column; gap: 4px; }
+  .dep .layer-box { border-radius: 6px; padding: 6px 8px; font-size: 9px; color: #fff; text-align: center; line-height: 1.35; }
+  .dep .layer-box b { display: block; font-size: 10px; }
+  .dep .layer-box span { font-size: 7.6px; opacity: .8; }
+  .dep .b1 { background: #1f6fb2; }
+  .dep .b2 { background: #2f86cf; }
+  .dep .b3 { background: #0f8f84; }
+  .dep .b4 { background: #2f8f5b; }
+  .dep .b5 { background: #5f7488; }
+  .dep .down { text-align: center; font-size: 9px; color: #7da0ba; line-height: 1; }
+  .iface {
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 8.7px; line-height: 1.55;
+    background: #fbfdff; border: 1px solid #d6e6f1; border-radius: 7px; padding: 8px 9px;
+    color: #365a74; white-space: pre; overflow: hidden;
+  }
+  .iface b { color: #0f5b8f; font-weight: 600; }
+  .iface em { font-style: normal; color: #9a4a15; }
+  .convention-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .convention { border: 1px solid #d2e3ef; background: #fbfdff; border-radius: 5px; padding: 4px 6px; }
+  .convention b { display: block; font-size: 8.5px; color: #14507d; }
+  .convention span { display: block; font-size: 7.4px; color: #7a90a2; line-height: 1.35; margin-top: 1px; }
+  .contract-bar {
+    margin-top: 9px; border: 1px solid #cfe2ef; background: rgba(255,255,255,.72);
+    border-radius: 8px; padding: 7px 10px; display: flex; gap: 12px; align-items: center; font-size: 8.6px; color: #5f788e;
+  }
+  .contract-bar b { color: #14507d; }
+  .test-matrix { margin-top: 7px; display: flex; flex-direction: column; gap: 3px; }
+  .test-matrix div { display: flex; gap: 6px; align-items: baseline; font-size: 8.4px; padding: 3px 6px; border-radius: 4px; background: #f8fcfe; border: 1px solid #e3eef6; }
+  .test-matrix b { flex: 0 0 48px; color: #14507d; font-size: 8.4px; }
+  .test-matrix span { color: #7a90a2; }
+  .compat { margin-top: 7px; border: 1px dashed #cfe2ef; background: #fbfdff; border-radius: 6px; padding: 6px 8px; }
+  .compat b { display: block; font-size: 9px; color: #14507d; margin-bottom: 3px; }
+  .compat span { display: block; font-size: 8.3px; color: #6f879a; line-height: 1.5; }
+  .run-note { margin-top: 6px; font-size: 8.2px; color: #5f788e; background: #f4fafd; border: 1px solid #d8e8f2; border-radius: 5px; padding: 5px 7px; line-height: 1.5; }
+  .run-note b { color: #14507d; }
+  .contract-bar .sep { width: 1px; height: 12px; background: #d5e5f0; }
+
+  /* --------------------------------------------------------------- roadmap */
+  .banner {
+    margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 12px;
+    border-radius: 8px; padding: 8px; font-size: 13px; color: #1f4f76;
+    background: linear-gradient(90deg, #eaf5fc, #f3fafd, #eaf7f4); border: 1px solid #cfe3ef;
+  }
+  .banner b { color: #0f7a71; }
+  .roadmap { flex: 1; display: flex; flex-direction: column; gap: 11px; margin-top: 12px; min-height: 0; }
+  .road-row { display: flex; gap: 10px; align-items: stretch; flex: 1; }
+  .road-row.bottom { justify-content: center; }
+  .road-card {
+    flex: 1; background: #fff; border: 1px solid #cfe1ed; border-radius: 10px; padding: 10px 12px;
+    position: relative; box-shadow: 0 4px 12px rgba(20,68,105,.035); min-width: 0;
+    display: flex; flex-direction: column;
+  }
+  .road-card.core { border-top: 3px solid #1f6fb2; }
+  .road-card.opt { border-top: 3px solid #d9822b; }
+  .road-card .top { display: flex; align-items: center; gap: 7px; }
+  .road-card .num {
+    width: 24px; height: 24px; border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff; background: #1f6fb2; flex: 0 0 24px;
+  }
+  .road-card.opt .num { background: #d9822b; }
+  .road-card h3 { font-size: 14px; color: #103f68; }
+  .road-card .badges { margin-left: auto; display: flex; gap: 4px; }
+  .road-card .desc { font-size: 9.5px; color: #7a90a2; margin: 5px 0 5px; }
+  .road-card ul { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .road-card li { font-size: 9.6px; color: #4f6d85; line-height: 1.45; padding-left: 10px; position: relative; }
+  .road-card li::before { content: ""; position: absolute; left: 0; top: 6px; width: 4px; height: 4px; border-radius: 50%; background: #8eb8d6; }
+  .road-card .demo { margin-top: 5px; font-size: 8.5px; color: #28709e; }
+  .road-card .value { margin-top: 5px; font-size: 8.6px; color: #7a5a2c; background: #fdf8f2; border-radius: 4px; padding: 3px 5px; }
+  .road-card .accept { margin-top: auto; padding-top: 6px; border-top: 1px dashed #dbe8f2; font-size: 8.2px; color: #4f6d85; line-height: 1.4; }
+  .road-card .accept b { color: #0f7a71; }
+  .road-card ul { flex: 1; justify-content: center; gap: 4px; }
+  .road-arrow { display: flex; align-items: center; color: #7fa6c5; font-size: 16px; flex: 0 0 16px; justify-content: center; }
+  .road-row.bottom .road-card { flex: 0 1 620px; }
+  .road-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 12px; }
+  .road-kpis div { border: 1px solid #cfe2ef; background: rgba(255,255,255,.72); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .road-kpis b { display: block; font-size: 21px; color: #1f6fb2; letter-spacing: .3px; }
+  .road-kpis span { display: block; font-size: 8.5px; color: #7a90a2; margin-top: 1px; }
+
+  /* --------------------------------------------------------------- doc2md */
+  .split-55 { flex: 1; display: grid; grid-template-columns: 1.05fr .95fr; gap: 14px; margin-top: 12px; min-height: 0; }
+  .pipe { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; }
+  .pipe-step {
+    background: #fff; border: 1px solid #c7dceb; border-radius: 8px; padding: 7px 8px; position: relative;
+  }
+  .pipe-step .n { font-size: 9px; color: #1f6fb2; font-weight: 700; }
+  .pipe-step b { display: block; font-size: 10.5px; color: #123f68; margin: 1px 0 2px; }
+  .pipe-step span { display: block; font-size: 8.4px; color: #72899c; line-height: 1.4; }
+  .pipe-step::after {
+    content: "→"; position: absolute; right: -11px; top: 50%; transform: translateY(-50%);
+    color: #7fa6c5; font-size: 12px;
+  }
+  .pipe-step:nth-child(2n)::after, .pipe-step:last-child::after { display: none; }
+  .pipe-step:nth-child(3)::after { content: "↳"; right: auto; left: 50%; top: auto; bottom: -12px; transform: translateX(-50%); }
+  .naming {
+    margin-top: 10px; border: 1px solid #b9ded8; background: #f2fbf8; border-radius: 8px; padding: 8px 10px;
+  }
+  .naming h4 { font-size: 9.5px; color: #0f7a71; letter-spacing: .3px; margin-bottom: 4px; }
+  .naming .name { font-family: "SFMono-Regular", Consolas, monospace; font-size: 11px; color: #0b5f57; background: #fff; border: 1px dashed #b9ded8; border-radius: 4px; padding: 4px 7px; text-align: center; }
+  .naming p { font-size: 8.4px; color: #5f7f7a; line-height: 1.45; margin-top: 4px; }
+  .matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .matrix .m {
+    background: #fbfdff; border: 1px solid #d3e3ef; border-radius: 6px; padding: 6px 7px;
+  }
+  .matrix .m b { font-size: 9.5px; color: #14507d; }
+  .matrix .m span { display: block; font-size: 8px; color: #758b9d; line-height: 1.38; margin-top: 2px; }
+  .why { margin-top: 8px; border: 1px dashed #cfe2ef; border-radius: 7px; padding: 7px 9px; background: rgba(255,255,255,.55); }
+  .why h4 { font-size: 9.5px; color: #9a4a15; margin-bottom: 3px; }
+  .why ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+  .why li { font-size: 7.9px; color: #5f788e; line-height: 1.4; padding-left: 8px; position: relative; }
+  .why li::before { content: ""; position: absolute; left: 0; top: 5px; width: 3px; height: 3px; border-radius: 50%; background: #d0a06e; }
+  .onesentence { margin-top: 8px; text-align: center; font-size: 10px; color: #1a5f7f; background: #eaf6fb; border-radius: 6px; padding: 6px; }
+  .onesentence b { color: #0f7a71; }
+  .vl-sample { margin-top: 8px; border: 1px solid #d2e3ef; background: #fbfdff; border-radius: 6px; padding: 6px 8px; }
+  .vl-sample b { font-size: 8.5px; color: #14507d; }
+  .vl-sample code { display: block; margin-top: 3px; font-size: 8px; color: #2b6f9b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vl-sample p { margin-top: 3px; font-size: 8px; color: #6f879a; line-height: 1.4; }
+  .quality-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .mini-spec { margin-top: 7px; display: flex; flex-direction: column; gap: 3px; }
+  .mini-spec div { display: flex; gap: 6px; font-size: 8px; color: #6f879a; line-height: 1.4; }
+  .mini-spec b { flex: 0 0 56px; color: #14507d; font-size: 8px; }
+  .fmt-table { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 7px; }
+  .fmt-table div { border: 1px solid #d2e3ef; background: #fbfdff; border-radius: 5px; padding: 4px 6px; }
+  .fmt-table b { display: block; font-size: 8px; color: #14507d; }
+  .fmt-table span { display: block; font-size: 7.3px; color: #7a90a2; margin-top: 1px; line-height: 1.35; }
+  .edge-list { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+  .edge-list div { display: flex; gap: 6px; font-size: 7.8px; color: #7a90a2; line-height: 1.4; }
+  .edge-list b { flex: 0 0 54px; color: #9a4a15; font-size: 7.8px; }
+  .impl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
+  .impl-grid div { border: 1px solid #d2e3ef; background: #fbfdff; border-radius: 5px; padding: 4px 6px; }
+  .impl-grid b { display: block; font-size: 8px; color: #14507d; }
+  .impl-grid span { display: block; font-size: 7.4px; color: #7a90a2; margin-top: 1px; }
+  .db-params { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 7px; }
+  .db-params div { border: 1px solid #d2e3ef; background: #fff; border-radius: 5px; padding: 5px 7px; }
+  .db-params b { display: block; font-size: 8px; color: #14507d; }
+  .db-params span { display: block; font-size: 7.6px; color: #7a90a2; margin-top: 1px; line-height: 1.4; }
+  .mode-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 7px; }
+  .mode-cards div { background: #0f2a40; border-radius: 6px; padding: 6px 8px; }
+  .mode-cards b { display: block; font-size: 8.5px; color: #7fd3c9; letter-spacing: .5px; }
+  .mode-cards code { display: block; font-size: 7.4px; color: #c9e2f2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* -------------------------------------------------------------- docbase */
+  .build-flow { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .build-flow .node { padding: 7px 5px; }
+  .build-flow .node b { font-size: 10.5px; }
+  .build-flow .node span { font-size: 8.5px; }
+  .progress { margin-top: 7px; display: flex; align-items: center; gap: 8px; }
+  .progress .bar { flex: 1; height: 6px; border-radius: 6px; background: #e3eef6; overflow: hidden; }
+  .progress .bar i { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, #2f86cf, #0f8f84); }
+  .progress span { font-size: 8.5px; color: #6f879a; white-space: nowrap; }
+  .query-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .q-routes { flex: 1.15; display: flex; flex-direction: column; gap: 4px; }
+  .q-route { border: 1px solid #cfe2ef; background: #fff; border-radius: 6px; padding: 5px 8px; font-size: 8.6px; color: #6b8296; line-height: 1.35; }
+  .q-route b { display: block; font-size: 9.6px; color: #14507d; }
+  .q-box { flex: .8; border-radius: 7px; padding: 7px 5px; text-align: center; border: 1px solid #b9d9ef; background: #edf7fd; font-size: 8.8px; color: #205f8f; line-height: 1.35; }
+  .q-box b { display: block; font-size: 10px; color: #11436d; }
+  .q-box.teal { background: #eaf7f4; border-color: #b9ded8; color: #0f6f66; }
+  .q-box.green { background: #eef8f1; border-color: #c6e5d0; color: #2f7c51; }
+  .q-box.orange { background: #fdf5ec; border-color: #eed6bd; color: #a85a16; }
+  .why3 { margin-top: 8px; border-left: 3px solid #d9822b; background: #fdf8f2; border-radius: 0 6px 6px 0; padding: 6px 9px; }
+  .why3 b { font-size: 9.5px; color: #9a4a15; }
+  .why3 p { font-size: 8.4px; color: #6f5f4d; line-height: 1.5; margin-top: 2px; }
+  .why3 em { font-style: normal; color: #1f6fb2; }
+  .db-foot { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 8px; margin-top: 9px; }
+  .db-foot .d { border: 1px solid #d2e3ef; background: #fbfdff; border-radius: 7px; padding: 7px 9px; }
+  .db-foot .d b { display: block; font-size: 8.8px; color: #14507d; margin-bottom: 2px; }
+  .db-foot .d span { display: block; font-size: 7.9px; color: #7a90a2; line-height: 1.45; }
+  .db-foot .d em { font-style: normal; color: #9a4a15; }
+  .search-demo { margin-top: 8px; border: 1px solid #d2e3ef; background: #fbfdff; border-radius: 7px; padding: 6px 9px; }
+  .search-demo b { font-size: 8.6px; color: #14507d; }
+  .search-demo p { font-size: 8px; color: #6f879a; line-height: 1.55; margin-top: 2px; }
+  .search-demo em { font-style: normal; color: #1f6fb2; }
+
+  /* --------------------------------------------------------------- agents */
+  .agents-grid { flex: 0 0 auto; display: grid; grid-template-columns: .92fr 1.08fr; gap: 12px; margin-top: 10px; min-height: 0; }
+  .agents-left { display: flex; flex-direction: column; gap: 8px; }
+  .about-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  .about-list li { position: relative; padding-left: 12px; font-size: 9.6px; line-height: 1.5; color: #4f6d85; }
+  .about-list li::before { content: ""; position: absolute; left: 0; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: #2f86cf; }
+  .about-list b { color: #14507d; }
+  .insight { border-radius: 8px; padding: 8px 10px; background: linear-gradient(135deg, #fdf4e8, #fffaf3); border: 1px solid #efd6b8; }
+  .insight h4 { font-size: 9.5px; color: #b45309; margin-bottom: 3px; letter-spacing: .4px; }
+  .insight p { font-size: 8.8px; line-height: 1.55; color: #7a5a3c; }
+  .flow8 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .flow8 .node { padding: 6px 4px; }
+  .flow8 .node b { font-size: 9.3px; white-space: normal; }
+  .flow8 .node span { font-size: 7.6px; }
+  .flow8 .node:nth-child(4)::after, .flow8 .node:nth-child(8)::after { display: none; }
+  .sflow { margin-top: 7px; text-align: center; font-size: 9px; color: #4e6f88; background: #f1f9fd; border: 1px dashed #c7e0f0; border-radius: 6px; padding: 5px; }
+  .sflow b { color: #1f6fb2; }
+  .conv4 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .conv4 .c { background: #fff; border: 1px solid #d2e3ef; border-radius: 6px; padding: 6px 8px; }
+  .conv4 .c b { display: flex; align-items: center; gap: 4px; font-size: 9.2px; color: #14507d; }
+  .conv4 .c b i { font-style: normal; width: 14px; height: 14px; border-radius: 4px; background: #eaf4fc; color: #1f6fb2; font-size: 8px; display: inline-flex; align-items: center; justify-content: center; }
+  .conv4 .c span { display: block; margin-top: 2px; font-size: 8px; color: #7a90a2; line-height: 1.38; }
+  .mechanism { display: flex; flex-direction: column; gap: 4px; }
+  .mechanism div { display: flex; gap: 7px; align-items: baseline; font-size: 8.4px; color: #5f788e; line-height: 1.45; }
+  .mechanism b { flex: 0 0 46px; color: #1f6fb2; font-size: 8.2px; }
+  .compare { margin-top: 7px; border: 1px solid #efd6b8; background: #fdf8f2; border-radius: 6px; padding: 6px 8px; }
+  .compare div { display: flex; gap: 6px; align-items: baseline; font-size: 8.2px; line-height: 1.45; margin: 2px 0; }
+  .compare b { flex: 0 0 58px; color: #9a4a15; font-size: 8.1px; }
+  .compare span { color: #7a5a3c; }
+  .compare .new b { color: #0f7a71; }
+  .compare .new span { color: #4f6d85; }
+  .effect-grid { display: flex; flex-direction: column; gap: 4px; }
+  .effect-grid div { background: #fbfdff; border: 1px solid #d8e8f2; border-radius: 5px; padding: 4px 6px; }
+  .effect-grid b { display: block; font-size: 8.2px; color: #14507d; }
+  .effect-grid span { display: block; font-size: 7.5px; color: #7a90a2; margin-top: 1px; }
+  .contract-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .agents-code { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .code-card { background: #0c1f31; color: #cfe6f7; border-radius: 8px; padding: 12px 14px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 8.8px; line-height: 1.75; white-space: pre; overflow: hidden; }
+  .code-card b { color: #7fd3c9; font-weight: 600; }
+  .agents-summary { margin-top: 7px; text-align: center; font-size: 10px; color: #1a5f7f; background: #eaf6fb; border-radius: 6px; padding: 6px; }
+
+  /* --------------------------------------------------------------- demo */
+  .demo-grid { flex: 1; display: grid; grid-template-columns: 1.08fr .92fr; gap: 14px; margin-top: 12px; min-height: 0; }
+  .terminal {
+    background: #0c1f31; border-radius: 10px; padding: 0; overflow: hidden; border: 1px solid #1d3b52;
+    box-shadow: 0 16px 40px rgba(7,25,40,.25); display: flex; flex-direction: column;
+  }
+  .terminal-bar { height: 28px; display: flex; align-items: center; gap: 5px; padding: 0 10px; background: #122b3f; }
+  .terminal-bar i { width: 7px; height: 7px; border-radius: 50%; background: #e16b5d; }
+  .terminal-bar i:nth-child(2) { background: #e3b34a; }
+  .terminal-bar i:nth-child(3) { background: #4bbf7a; }
+  .terminal-bar span { margin-left: 8px; font-size: 9px; color: #7896ab; }
+  .terminal-body {
+    flex: 1; padding: 12px 14px; font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 9.8px; line-height: 1.7; color: #c9e2f2; white-space: pre-wrap; overflow: hidden;
+  }
+  .terminal-body .p { color: #6fd1a4; }
+  .terminal-body .c { color: #7fb7d8; }
+  .terminal-body .y { color: #f1c46a; }
+  .terminal-body .g { color: #7bd3a3; }
+  .terminal-body .m { color: #9fb6c8; }
+  .shot-stack { display: flex; flex-direction: column; gap: 9px; min-height: 0; }
+  .shot { border: 1px solid #cfe1ed; border-radius: 9px; overflow: hidden; background: #fff; box-shadow: 0 6px 18px rgba(20,68,105,.08); position: relative; flex: 0 0 auto; }
+  .shot img { display: block; width: 100%; height: 260px; object-fit: cover; object-position: top; }
+  .shot:first-child img { height: 310px; }
+  .shot .label { position: absolute; left: 8px; top: 8px; font-size: 8px; color: #fff; background: rgba(11,42,75,.68); border-radius: 4px; padding: 2px 6px; }
+  .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 8px; }
+  .metric { background: #fff; border: 1px solid #d2e4f0; border-radius: 7px; padding: 7px 8px; text-align: center; }
+  .metric b { display: block; font-size: 18px; color: #1f6fb2; letter-spacing: .5px; }
+  .metric span { display: block; font-size: 8px; color: #7a90a2; margin-top: 1px; }
+  .deliverables { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .deliverable { display: flex; align-items: center; gap: 6px; font-size: 8.6px; color: #4f6d85; }
+  .deliverable b { color: #14507d; font-weight: 600; }
+  .deliverable i { width: 5px; height: 5px; border-radius: 50%; background: #7fb09c; }
+  .note { margin-top: 6px; font-size: 8px; color: #8a6a45; background: #fdf8f2; border: 1px solid #efddc8; border-radius: 5px; padding: 4px 6px; line-height: 1.4; }
+
+  /* --------------------------------------------------------------- close */
+  .close { background: linear-gradient(140deg, #0b2138 0%, #103a5c 50%, #0b4f5c 100%); }
+  .close::before { background-image: radial-gradient(rgba(127,196,235,.16) 1px, transparent 1px); background-size: 30px 30px; mask-image: none; }
+  .close .slide-inner { align-items: center; justify-content: center; text-align: center; color: #fff; }
+  .close .kicker { color: #7fd3c9; }
+  .close .kicker::before { background: #7fd3c9; }
+  .close h2 { font-size: 48px; line-height: 1.35; margin: 18px 0 0; letter-spacing: 1px; }
+  .close h2 span { color: #8fd8ff; }
+  .close .three { display: flex; gap: 14px; margin-top: 34px; }
+  .close .three div { width: 300px; border: 1px solid rgba(160,214,240,.25); background: rgba(255,255,255,.05); border-radius: 10px; padding: 14px 16px; text-align: left; }
+  .close .three b { display: block; font-size: 13px; color: #a9d9ef; margin-bottom: 4px; }
+  .close .three span { font-size: 10px; color: #9fb9c9; line-height: 1.55; }
+  .close .thanks { margin-top: 34px; font-size: 15px; color: #cfe6f2; letter-spacing: 2px; }
+  .close .thanks b { color: #fff; font-size: 20px; margin-left: 6px; }
+  .close .meta { margin-top: 8px; font-size: 10px; color: #7f9daf; }
+  .close .foot { position: absolute; left: 58px; right: 58px; bottom: 30px; border-top-color: rgba(160,214,240,.2); color: #6f8ea1; }
+
+  /* ----------------------------------------------------------------- nav */
+  .nav {
+    position: fixed; right: 22px; bottom: 18px; z-index: 30; display: flex; align-items: center; gap: 8px;
+    background: rgba(10,28,44,.86); border: 1px solid rgba(125,177,210,.25); border-radius: 999px;
+    padding: 6px 8px; color: #cfe6f2; backdrop-filter: blur(10px);
+  }
+  .nav button {
+    border: 0; background: transparent; color: #d7ecf7; width: 28px; height: 28px; border-radius: 50%;
+    font-size: 14px; cursor: pointer;
+  }
+  .nav button:hover { background: rgba(255,255,255,.12); }
+  .nav .count { font-size: 10px; color: #8fb3c8; min-width: 48px; text-align: center; font-variant-numeric: tabular-nums; }
+  .nav .print { width: auto; padding: 0 9px; font-size: 9px; border-radius: 999px; border: 1px solid rgba(125,177,210,.25); }
+  .hint {
+    position: fixed; left: 22px; bottom: 20px; z-index: 30; font-size: 9px; color: #6f8ea1;
+    letter-spacing: .3px;
+  }
+
+  @media print {
+    html, body { width: 1600px; height: auto; background: #fff; overflow: visible; }
+    .viewport { position: static; display: block; }
+    .stage { transform: none !important; width: 1600px; height: auto; }
+    .slide { position: relative; display: block !important; page-break-after: always; break-after: page; width: 1600px; height: 900px; }
+    .nav, .hint { display: none !important; }
+    @page { size: 1600px 900px; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="viewport">
+<div class="stage" id="stage">
+
+  <!-- ============================================================ 1 cover -->
+  <section class="slide cover active" id="s1">
+    <div class="slide-inner">
+      <div class="award">2026 年数通第八届爱迪生创新大赛 · 入围作品</div>
+      <h1>基于 AI Agent 的个人本地<br><em>多模态文档智能问答系统</em></h1>
+      <div class="rule"></div>
+      <div class="sub"><b>doc2md × DocBase × AGENTS.md</b> —— 让沉睡的本地文档“开口说话”</div>
+
+      <div class="abstract">
+        <h3>摘 要</h3>
+        <p>个人本地沉淀了大量 PDF、Word、PPT 等多模态文档，一旦忘记存放位置与文件名，仅凭模糊的内容记忆极难找回。本创意通过 AI Agent（CodeAgent）自动开发 Python 脚本，结合 RAG、Embedding、Reranker、Chat、VL 等大模型能力，预解析本地文档并构建 RAG 数据库，再以 AGENTS.md 指导 Agent 消费该库，实现“内容即入口”的智能问答与精准溯源。</p>
+      </div>
+
+      <div class="tech">
+        <span class="label">技术栈</span>
+        <span class="chip blue">CodeAgent</span>
+        <span class="chip teal">RAG</span>
+        <span class="chip blue">Embedding</span>
+        <span class="chip teal">Reranker</span>
+        <span class="chip orange">Chat LLM</span>
+        <span class="chip orange">VL 模型</span>
+      </div>
+      <div class="models">
+        <span>公司装备部提供模型支持：</span>
+        <span>Embedding（<b>Qwen3-Embedding-8B</b>）</span>
+        <span>· Reranker（<b>Qwen3-Reranker-8B</b>）</span>
+        <span>· Chat（<b>GLM-5.1</b>）</span>
+        <span>· VL（<b>Qwen3.6-27B-VL</b>）</span>
+      </div>
+      <div class="pillars"><span>全本地运行</span><span>图片可检索</span><span>回答可溯源</span><span>模型可替换</span></div>
+
+      <div class="credits">
+        <span>创意提交人：<b>井永乐 | 00587807</b> · 转发开发部 [ICT BG]</span>
+        <span>2026-07-30</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== 2 architecture -->
+  <section class="slide" id="s2">
+    <div class="slide-inner">
+      <div class="head-row">
+        <div>
+          <div class="kicker">Architecture</div>
+          <h2 class="title">系统总体架构</h2>
+          <div class="subtitle">三层解耦架构：文档解析层 → 知识库层 → Agent 消费层</div>
+        </div>
+        <div class="head-note">全本地运行 · 仅调用公司内部模型服务 · 数据不出本机</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="layer l1">
+          <div class="layer-label">
+            <span class="no">① PARSING</span>
+            <b>文档解析层</b>
+            <small>doc2md · 多模态文档 → 结构化 Markdown</small>
+            <span class="url">codehub-y.huawei.com/j00587807/doc2</span>
+          </div>
+          <div class="layer-flow">
+            <div class="node blue"><b>格式转换</b><span>PDF/Word/PPT→MD</span></div>
+            <div class="arrow"></div>
+            <div class="node blue"><b>OCR 提取</b><span>位图 + 矢量图</span></div>
+            <div class="arrow"></div>
+            <div class="node blue"><b>VL 多模态解析</b><span>Qwen3.6-27B-VL 释义</span></div>
+            <div class="arrow"></div>
+            <div class="node blue"><b>Markdown 生成</b><span>图片描述写入正文</span></div>
+            <div class="arrow"></div>
+            <div class="node blue"><b>溯源元信息前置</b><span>文档名 · Page · Figure Title</span></div>
+            <div class="arrow"></div>
+            <div class="node blue"><b>原始链接关系</b><span>可逆向定位原文</span></div>
+          </div>
+          <div class="out"><em>产出</em><b>结构化 Markdown<br>+ 图片 AI 释义</b></div>
+        </div>
+
+        <div class="layer-link"><span></span></div>
+
+        <div class="layer l2">
+          <div class="layer-label">
+            <span class="no">② RETRIEVAL</span>
+            <b>知识库层</b>
+            <small>DocBase · RAG 数据库</small>
+            <span class="url">codehub-y.huawei.com/j00587807/DocBase</span>
+          </div>
+          <div class="layer-flow">
+            <div class="node teal"><b>Chunk 切片</b><span>语义分段 · 多文档</span></div>
+            <div class="arrow"></div>
+            <div class="node teal"><b>向量化</b><span>Qwen3-Embedding-8B</span></div>
+            <div class="arrow"></div>
+            <div class="node teal"><b>混合检索三路召回</b><span>稠密 + BM25 + BGE-M3</span></div>
+            <div class="arrow"></div>
+            <div class="node teal"><b>RRF 融合</b><span>多路结果归并</span></div>
+            <div class="arrow"></div>
+            <div class="node teal"><b>Reranker 重排</b><span>Qwen3-Reranker-8B</span></div>
+            <div class="arrow"></div>
+            <div class="node teal"><b>TOP-K 文本块</b><span>含溯源元数据</span></div>
+          </div>
+          <div class="out"><em>能力</em><b>build（进度条）<br>/ query / test 三模式</b></div>
+        </div>
+
+        <div class="layer-link"><span></span></div>
+
+        <div class="layer l3">
+          <div class="layer-label">
+            <span class="no">③ AGENT</span>
+            <b>Agent 消费层</b>
+            <small>AGENTS.md 驱动 CodeAgent 问答</small>
+            <span class="url">CLI / Web / Service</span>
+          </div>
+          <div class="layer-flow">
+            <div class="node orange"><b>AGENTS.md 知识入口</b><span>指导 Agent 如何消费 RAG</span></div>
+            <div class="arrow"></div>
+            <div class="node orange"><b>意图理解 · RAG 查询</b><span>自动构建 query 检索知识库</span></div>
+            <div class="arrow"></div>
+            <div class="node orange"><b>GLM-5.1 综合推理</b><span>多文档交叉 · 生成回答</span></div>
+            <div class="arrow"></div>
+            <div class="node orange"><b>结构化产出</b><span>Mermaid 图 / 表格 / 摘要</span></div>
+            <div class="arrow"></div>
+            <div class="node orange"><b>溯源输出</b><span>定位原始文档与页码</span></div>
+          </div>
+          <div class="out l3"><em>扩展</em><b>后台 Service<br>· Web 应用（可选）</b></div>
+        </div>
+      </div>
+
+      <div class="arch-note">
+        <span>解析入库 → 混合检索 → Agent 问答：三层各司其职，接口清晰</span>
+        <span>依赖方向：上层 → 下层 · 仅经 models 契约通信</span>
+      </div>
+
+      <div class="arch-bottom">
+        <div class="ab"><em>PARSING · 产物契约</em><b>document.md + assets/ + manifest.json</b><span>每张图带 Page / Fig / 标题，可回链原文</span></div>
+        <div class="ab"><em>RETRIEVAL · 检索契约</em><b>TOP-K + 三路分数 + index version</b><span>build / query / test 三模式，可增量、可回滚</span></div>
+        <div class="ab"><em>AGENT · 回答契约</em><b>answer + citations + rounds_used</b><span>无据不答，每条结论带原文定位</span></div>
+      </div>
+
+      <div class="foot"><span><b>DocQA</b> · 系统总体架构</span><span class="page-no"><b>02</b> / 10</span></div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 3 logical -->
+  <section class="slide" id="s3">
+    <div class="slide-inner">
+      <div class="head-row">
+        <div>
+          <div class="kicker">Logical View</div>
+          <h2 class="title" style="font-size:34px">DocQA 文档问答系统 — 逻辑视图</h2>
+          <div class="subtitle" style="font-size:13px">AGENTS.md 驱动 Agent 消费 · 三路混合检索 · 图文一体解析 · 全链路溯源</div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#1f6fb2"></i>核心问答链路</span>
+          <span><i style="background:#0f8f84"></i>模型服务调用</span>
+          <span><i style="background:#d9822b"></i>可选扩展</span>
+        </div>
+      </div>
+
+      <div class="logical">
+        <div class="logical-left">
+          <div class="entry-row">
+            <div class="entry-box"><b>用户入口层</b><span>CLI 命令行问答</span><span class="mono" style="font-size:8.5px">CodeAgent + AGENTS.md</span></div>
+            <div class="entry-box"><b>Web 网页问答</b><span>B/S · 无头 Agent</span><span class="badge opt">可选</span></div>
+            <div class="entry-box" style="flex:.9"><b>模型应用</b><span>仅调用内部模型服务 · 数据不出本机</span></div>
+          </div>
+
+          <div class="panel agent-panel">
+            <div class="panel-title"><span class="dot"></span>Agent 消费层 · DOCQA.AGENT-DRV<span class="tag">AGENTS.md 驱动</span></div>
+            <div class="flow">
+              <div class="node blue"><b>意图分析</b><span>拆解检索词<br>判断分类</span></div><div class="arrow"></div>
+              <div class="node blue"><b>RAG 查询</b><span>调用 DocBase<br>检索</span></div><div class="arrow"></div>
+              <div class="node blue"><b>充足性自评</b><span>不足时多轮<br>补充检索</span></div><div class="arrow"></div>
+              <div class="node blue"><b>综合推理</b><span>GLM-5.1<br>跨文档交叉</span></div><div class="arrow"></div>
+              <div class="node blue"><b>结构化回答</b><span>Mermaid / 表格<br>/ 溯源</span></div>
+            </div>
+            <div class="constraint"><b>约定：</b>必须先检索 · 无据不答 · 回答强制附原文链接 / 文档名 / 页码 / 图号</div>
+          </div>
+
+          <div class="panel rag-panel">
+            <div class="panel-title teal"><span class="dot"></span>RAG 检索引擎 · DOCQA.DocBase
+              <span class="chips" style="margin-left:auto"><span class="chip" style="font-size:8px;padding:2px 6px">build 建库</span><span class="chip" style="font-size:8px;padding:2px 6px">query 检索</span><span class="chip" style="font-size:8px;padding:2px 6px">test 评估</span></span>
+            </div>
+            <div class="rag-line">
+              <div class="route-stack">
+                <div class="route"><b>① 稠密向量检索</b>Qwen3-Embedding 语义匹配</div>
+                <div class="route"><b>② BM25 关键词检索</b>精确术语 · 型号 / 命令 / 接口名</div>
+                <div class="route"><b>③ BGE-M3 稀疏检索</b>学习型稀疏向量 · 兼顾词面权重</div>
+              </div>
+              <div class="arrow" style="flex:0 0 13px"></div>
+              <div class="mini-card"><b>RRF 融合</b>倒数排序<br>归并多路</div>
+              <div class="arrow" style="flex:0 0 13px"></div>
+              <div class="mini-card"><b>交叉编码精排</b>Reranker-8B<br>TOP-K 筛选</div>
+              <div class="arrow" style="flex:0 0 13px"></div>
+              <div class="mini-card green"><b>TOP-K 文本块</b>携带溯源<br>元数据</div>
+              <div class="arrow" style="flex:0 0 13px"></div>
+              <div class="mini-card orange"><b>供 Agent</b>综合回答</div>
+            </div>
+            <div class="rag-foot">
+              <span>三路并行召回 · 互补检索盲区 · <b>任一路异常自动降级可用</b></span>
+              <span>test 模式：召回率 / 命中率 / MRR 量化评估，支撑参数调优</span>
+            </div>
+          </div>
+
+          <div class="bottom-pair">
+            <div class="panel">
+              <div class="panel-title green"><span class="dot"></span>知识资产层（本地持久化 · 增量更新）</div>
+              <div class="asset-grid">
+                <div class="asset"><b>Markdown 语料库</b><span>标题层级 · 图文一体</span></div>
+                <div class="asset"><b>溯源图片库</b><span>文档名 · Page 图序 · 原图</span></div>
+                <div class="asset"><b>RAG 三路索引</b><span>稠密向量 + BM25 + 稀疏</span></div>
+                <div class="asset"><b>文档注册表</b><span>分类管理 · 增量更新</span></div>
+              </div>
+              <div class="parser-note">索引格式版本化 · 支持增量更新与回滚</div>
+              <div class="chips" style="margin-top:5px"><span class="chip" style="font-size:8px;padding:2px 6px">index.json</span><span class="chip" style="font-size:8px;padding:2px 6px">vectors.json</span><span class="chip" style="font-size:8px;padding:2px 6px">sparse.json</span><span class="chip teal" style="font-size:8px;padding:2px 6px">manifest.json</span></div>
+              <div class="asset-flow"><span>扫描目录</span><i>→</i><span>哈希比对</span><i>→</i><span>增量重建</span><i>→</i><span>版本回滚</span></div>
+              <div class="asset-stats"><span><b>5</b>文档</span><span><b>32</b>文本块</span><span><b>3</b>图片</span><span><b>0.6MB</b>索引</span></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-title orange"><span class="dot"></span>文档解析引擎 · DOCQA.Doc2md</div>
+              <div class="parser-flow">
+                <div class="node orange"><b>多格式输入</b><span>PDF/Word/PPT</span></div>
+                <div class="arrow" style="flex:0 0 10px"></div>
+                <div class="node orange"><b>格式统一</b><span>转 Markdown</span></div>
+                <div class="arrow" style="flex:0 0 10px"></div>
+                <div class="node orange"><b>OCR 提取</b><span>位置 / 矢量图</span></div>
+                <div class="arrow" style="flex:0 0 10px"></div>
+                <div class="node orange"><b>VL 释义</b><span>图文一体写入</span></div>
+              </div>
+              <div class="parser-note" style="margin-top:6px"><b>溯源命名：</b>文档名_Page图序_Figure标题，可逆向定位原文；矢量图先渲染为位图再识别，释义写入原图引用处。</div>
+              <div class="quote-demo">&gt; 图 2-1（VL 释义）：分机注册 → 鉴权 → 号码分析 → 中继选路 → 媒体协商 → 通话建立…</div>
+              <div class="chips" style="margin-top:5px"><span class="chip" style="font-size:8px;padding:2px 6px">PDF</span><span class="chip" style="font-size:8px;padding:2px 6px">DOCX</span><span class="chip" style="font-size:8px;padding:2px 6px">PPTX</span><span class="chip" style="font-size:8px;padding:2px 6px">MD</span><span class="chip" style="font-size:8px;padding:2px 6px">TXT</span></div>
+              <div class="parser-note" style="margin-top:4px">页码：PDF / PPT = exact；DOCX = estimated（明示）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="logical-right">
+          <div class="panel">
+            <div class="panel-title teal"><span class="dot"></span>内部模型服务<span class="tag">装备部 · 端点可配置</span></div>
+            <div class="model-row"><div class="ico">VL</div><div><b>Qwen3.6-27B-VL</b><span>图片深度释义（模块 / 箭头 / 编号语义）</span></div></div>
+            <div class="model-row"><div class="ico">EM</div><div><b>Qwen3-Embedding-8B</b><span>文本向量化（稠密检索）</span></div></div>
+            <div class="model-row"><div class="ico">RR</div><div><b>Qwen3-Reranker-8B</b><span>交叉编码精排（TOP-K 筛选）</span></div></div>
+            <div class="model-row"><div class="ico">CH</div><div><b>GLM-5.1</b><span>多文档交叉推理 · 回答生成</span></div></div>
+            <div class="tiny" style="margin-top:3px;color:#7a90a2">端点级配置注入，可替换 / 可 Mock；版本升级不影响产物格式。</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title orange"><span class="dot"></span>可选扩展<span class="tag">不启用不影响核心功能</span></div>
+            <div class="optional-row">
+              <div class="opt"><b>后台 Service</b>定时 / 增量更新 · 监控目录管理</div>
+              <div class="opt"><b>Web 应用</b>B/S 网页问答 · Mermaid 图形渲染</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title"><span class="dot"></span>可观测<span class="tag">可复盘</span></div>
+            <div class="obs">
+              <div><b>trace</b>每轮 query / 命中数 / 覆盖率 / 耗时</div>
+              <div><b>warnings</b>降级原因、缺失图片、端点异常</div>
+              <div><b>watch.log</b>增量更新事件，JSONL 可审计</div>
+            </div>
+          </div>
+
+          <div class="panel deploy">
+            <div class="panel-title"><span class="dot"></span>部署边界<span class="tag">本地优先</span></div>
+            <div class="deploy-grid">
+              <span>本地文件系统</span><span>Web 127.0.0.1</span>
+              <span>内部模型端点</span><span>Mock 可离线</span>
+            </div>
+            <div class="security">
+              <div>文档 / 索引 / 图片不出本机</div>
+              <div>API Key 只读环境变量，不写日志</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title green"><span class="dot"></span>质量快照<span class="tag">演示集</span></div>
+            <div class="quality-snap"><div><b>1.00</b><span>recall@6</span></div><div><b>19</b><span>测试通过</span></div><div><b>2ms</b><span>Mock 检索</span></div></div>
+          </div>
+
+          <div class="trace-box">
+            <h4>全链路溯源 · 无据不答</h4>
+            <p>回答 → 文本块 → Markdown → 原始文档<br>原文链接 · 文档名 · 页码 · 图号，一键跳回原文。</p>
+            <div class="path">一次解析 · 三路检索 · Agent 消费 —— 知识问答流水线全本地闭环</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot"><span><b>DocQA</b> · 逻辑视图</span><span class="page-no"><b>03</b> / 10</span></div>
+    </div>
+  </section>
+
+  <!-- ============================================================= 4 dev -->
+  <section class="slide" id="s4">
+    <div class="slide-inner">
+      <div class="head-row">
+        <div>
+          <div class="kicker">Development View</div>
+          <h2 class="title" style="font-size:34px">DocQA 文档问答系统 — 开发视图</h2>
+          <div class="subtitle" style="font-size:13px">Python 工程组织 · 变更点 ■ 模块映射 · 分层依赖单向 · 契约稳定</div>
+        </div>
+        <div class="head-note">五个变更点五个目录 · 换 Agent / 换模型不改约定与契约</div>
+      </div>
+
+      <div class="dev-grid">
+        <div class="dev-col">
+          <div class="panel" style="flex:1;display:flex;flex-direction:column">
+            <div class="panel-title"><span class="dot"></span>docqa 工程目录结构<span class="tag">Python · 数据与约定分离</span></div>
+            <div class="tree">docqa/
+├── <b>doc2md/</b>              <em># 变更点 1 · 解析</em>
+│   ├── parser.py            # 统一入口 + pdf/word/ppt
+│   ├── image_extractor.py   # 图片保存 / 尺寸
+│   ├── vl_client.py         # VL 释义适配
+│   ├── naming.py            # 溯源命名
+│   └── models.py            # ImageInfo / ParseTask
+├── <b>docbase/</b>             <em># 变更点 2 · 检索</em>
+│   ├── chunker.py           # 语义切片
+│   ├── indexer.py           # build / 增量 / 三路索引
+│   ├── retriever.py         # query / RRF / rerank
+│   ├── evaluator.py         # test: recall@k / MRR
+│   └── models.py            # Chunk / RagIndex / QueryResult
+├── <b>agent/</b>               <em># 变更点 3 · 消费</em>
+│   ├── answer.py            # 问答主流程
+│   └── models.py            # Answer / Citation
+├── <b>service/</b>             <em># 变更点 4 · 可选</em>
+│   ├── watcher.py           # 目录监控 / 增量更新
+│   └── models.py            # WatchConfig
+├── <b>web/</b>                 <em># 变更点 5 · 可选</em>
+│   ├── server.py            # stdlib HTTP 服务
+│   ├── models.py            # WebQueryResponse
+│   └── static/index.html    # B/S 前端
+├── llm.py                   # 四类端点 + Mock
+├── cli.py                   # parse/build/query/ask/eval
+└── utils.py
+tests/                      # test_doc2md / docbase / agent / web
+AGENTS.md                   # 知识消费约定</div>
+            <div class="run-note"><b>运行时：</b>Python 3.9+ · 标准库 · PDF 可选 pypdf · Web 无重型框架</div>
+          </div>
+          <div class="change-list">
+            <span>doc2md = 变更点 1</span><span>docbase = 变更点 2</span><span>agent = 变更点 3</span><span>service = 变更点 4</span><span>web = 变更点 5</span>
+          </div>
+        </div>
+
+        <div class="dev-col">
+          <div class="panel">
+            <div class="panel-title teal"><span class="dot"></span>分层依赖<span class="tag">自上而下单向</span></div>
+            <div class="dep">
+              <div class="layer-box b1"><b>入口层：web / service</b><span>无头 Agent 调用 · 定时增量触发</span></div>
+              <div class="down">↓</div>
+              <div class="layer-box b2"><b>Agent 层：agent</b><span>AGENTS.md 约定 · 意图分析 · 多轮检索编排</span></div>
+              <div class="down">↓</div>
+              <div class="layer-box b3"><b>检索层：docbase</b><span>切片 / 建库 / 三路召回 / 精排 / 评估</span></div>
+              <div class="down">↓</div>
+              <div class="layer-box b4"><b>解析层：doc2md</b><span>格式转换 / OCR / VL 释义 / 溯源命名</span></div>
+              <div class="down">↓</div>
+              <div class="layer-box b5"><b>模型端点层（外部服务 · 可 Mock）</b><span>VL · Embedding · Reranker · GLM-5.1</span></div>
+            </div>
+          </div>
+          <div class="panel" style="flex:1">
+            <div class="panel-title"><span class="dot"></span>可测性设计</div>
+            <ul class="about-list" style="gap:4px">
+              <li><b>docbase 内置 test 模式：</b>recall@k / hit_rate / MRR</li>
+              <li><b>四类模型服务：</b>统一端点注入，UT 用 Mock 替换</li>
+              <li><b>溯源链路确定性：</b>回答 → Chunk → MD → 原文，端到端断言</li>
+              <li><b>doc2md 产物图文互证：</b>Mermaid 重绘 vs 原图对照</li>
+              <li><b>当前：</b>19 个单元/集成用例全部通过</li>
+            </ul>
+            <div class="test-matrix">
+              <div><b>doc2md</b><span>Markdown / PDF / DOCX / PPTX / TXT · 图片命名与回链</span></div>
+              <div><b>docbase</b><span>三路召回 · 精确术语 · 分类过滤 · 增量 · 评估</span></div>
+              <div><b>agent</b><span>流程 / 命令 / 无据拒答 / 契约字段 / 意图</span></div>
+              <div><b>web</b><span>静态页 · stats · ask · 原文接口</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dev-col">
+          <div class="panel">
+            <div class="panel-title orange"><span class="dot"></span>核心接口（Spec 契约）</div>
+            <div class="iface"><b>doc2md</b>
+parse_document(src, out, vl_opts)
+batch_parse(dir, recursive, types)
+
+<b>docbase</b>
+build_index(md_dir, incremental)
+query(index, q, top_k, category)
+eval_retrieval(index, test_set)
+
+<b>agent</b>
+answer_question(q, index, max_rounds)
+
+<b>service / web（可选）</b>
+register_watcher(cfg) / update_single_doc(doc)
+handle_query(req) → WebQueryResponse</div>
+            <div class="tiny" style="margin-top:4px;color:#7a5a2c;background:#fdf8f2;border-radius:4px;padding:3px 5px">兼容：字段只增不改 · 索引可回滚 · CLI 向后兼容</div>
+          </div>
+          <div class="panel" style="flex:1">
+            <div class="panel-title teal"><span class="dot"></span>AGENTS.md 四类约定<span class="tag">数据与代码分离</span></div>
+            <div class="convention-grid">
+              <div class="convention"><b>① 存在性声明</b><span>本仓库配备 DocBase 库，先检索再回答</span></div>
+              <div class="convention"><b>② 查询策略</b><span>分类缩小范围；名词走 BM25，原理走向量</span></div>
+              <div class="convention"><b>③ 溯源强制</b><span>附链接/文档名/页码/图号；无据不答</span></div>
+              <div class="convention"><b>④ 产出形式</b><span>流程类重绘 Mermaid，与原图互证</span></div>
+            </div>
+            <div class="compat"><b>兼容与回滚</b><span>字段只增不改 · 索引版本可回滚 · CLI 参数向后兼容</span></div>
+            <div class="run-note"><b>运行：</b>./run.sh demo · make test · ./run.sh serve</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="contract-bar">
+        <b>关键数据契约（models.py）</b>
+        <span>doc2md：ImageInfo / ParseTask / ParseResult</span><span class="sep"></span>
+        <span>docbase：Chunk / RagIndex / QueryResult</span><span class="sep"></span>
+        <span>agent：answer / format / citations / rounds_used</span><span class="sep"></span>
+        <span>WebQueryResponse 与 answer_question 对齐</span>
+      </div>
+
+      <div class="foot"><span><b>DocQA</b> · 开发视图</span><span class="page-no"><b>04</b> / 10</span></div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 5 roadmap -->
+  <section class="slide" id="s5">
+    <div class="slide-inner">
+      <div class="head-row">
+        <div>
+          <div class="kicker">Roadmap</div>
+          <h2 class="title" style="font-size:36px">实施路径：五步渐进，逐步演进</h2>
+          <div class="subtitle" style="font-size:13px">全部通过 CodeAgent Vibe Coding 开发 —— AI 写代码，人做决策</div>
+        </div>
+        <div class="head-note">1–3 步：核心闭环 · 4–5 步：团队与领域演进</div>
+      </div>
+
+      <div class="banner"><span>核心闭环</span><b>doc2md → DocBase → AGENTS.md</b><span>已完成 Demo</span><span style="color:#b8c9d6;margin:0 6px">|</span><span>可选扩展</span><b>Service → Web</b><span>已提供可运行实现</span></div>
+
+      <div class="roadmap">
+        <div class="road-row">
+          <div class="road-card core">
+            <div class="top"><div class="num">1</div><h3>文档格式转换工具 doc2md</h3><div class="badges"><span class="badge must">基础必做</span><span class="badge done">已完成 Demo</span></div></div>
+            <div class="desc">多模态文档 → 结构化 Markdown</div>
+            <ul>
+              <li>PDF/Word/PPT 一键转 Markdown</li>
+              <li>OCR 提取文档内图片（位置 + 矢量图）</li>
+              <li>调用 VL 模型解析图片内容并写入 MD</li>
+              <li>保留对原始文档的链接关系</li>
+              <li>图片命名含文档名/Page/Figure Title，支持逆向溯源</li>
+            </ul>
+            <div class="demo">Demo：codehub-y.huawei.com/j00587807/doc2md</div>
+            <div class="accept"><b>验收：</b>5 类格式 · 图片命名可逆 · manifest 完整</div>
+          </div>
+          <div class="road-arrow">→</div>
+          <div class="road-card core">
+            <div class="top"><div class="num">2</div><h3>RAG 检索工具 DocBase</h3><div class="badges"><span class="badge must">基础必做</span><span class="badge done">已完成 Demo</span></div></div>
+            <div class="desc">三路混合召回 · RRF · Reranker 精排</div>
+            <ul>
+              <li>Markdown 切片（Chunk）+ 向量化入库</li>
+              <li>三路混合召回：稠密向量 + BM25 + BGE-M3 稀疏</li>
+              <li>RRF 融合 + Reranker 重排，筛选 TOP-K</li>
+              <li>build（进度条）/ query / test 三命令</li>
+              <li>支持多文档、文档分类管理</li>
+            </ul>
+            <div class="demo">Demo：codehub-y.huawei.com/j00587807/DocBase</div>
+            <div class="accept"><b>验收：</b>三路召回 · recall@6 · 增量建库</div>
+          </div>
+          <div class="road-arrow">→</div>
+          <div class="road-card core">
+            <div class="top"><div class="num">3</div><h3>AGENTS.md 知识消费约定</h3><div class="badges"><span class="badge must">基础必做</span><span class="badge done">已完成 Demo</span></div></div>
+            <div class="desc">本创意的核心差异点 · 约定驱动消费</div>
+            <ul>
+              <li>指导 CodeAgent 消费 RAG 向量库与 Markdown 原文</li>
+              <li>约定查询策略：何时检索、如何组合、如何引用</li>
+              <li>给出符合预期的回答 + 溯源，快速定位原始文档</li>
+              <li>示例：DocBase/CLAUDE.md（参考配置文件）</li>
+              <li>换 Agent / 换模型，约定与契约不变</li>
+            </ul>
+            <div class="demo">示例：DocBase/CLAUDE.md（参考配置文件）</div>
+            <div class="accept"><b>验收：</b>四类约定 · 无据不答 · 引用可回原文</div>
+          </div>
+        </div>
+
+        <div class="road-row bottom">
+          <div class="road-card opt">
+            <div class="top"><div class="num">4</div><h3>后台 Service 自动化运维</h3><div class="badges"><span class="badge opt">可选扩展</span><span class="badge core">团队级能力</span></div></div>
+            <div class="desc">知识库持续保鲜，无需人工干预</div>
+            <ul>
+              <li>定时/增量更新指定目录、指定文档类型</li>
+              <li>文档管理、向量化数据库管理、图片解析管理</li>
+              <li>支持新增监控目录、单文档解析、递归搜索</li>
+            </ul>
+            <div class="value">文档库持续保鲜，无需人工干预；知识库随文档沉淀自动演进</div>
+            <div class="accept"><b>验收：</b>变更检测 · 增量重建 · 事件日志</div>
+          </div>
+          <div class="road-arrow">→</div>
+          <div class="road-card opt">
+            <div class="top"><div class="num">5</div><h3>B/S 架构 Web 应用</h3><div class="badges"><span class="badge opt">可选扩展</span><span class="badge core">领域级能力</span></div></div>
+            <div class="desc">从个人工具到团队级、领域级应用</div>
+            <ul>
+              <li>脱离 CodeAgent 命令行，网页图形界面</li>
+              <li>后台调用 CodeAgent 无头模式：claude -p / nga run</li>
+              <li>确保回答质量，图形渲染更直观</li>
+            </ul>
+            <div class="value">降低使用门槛、扩大覆盖人群；从个人工具升级为团队级、领域级应用</div>
+            <div class="accept"><b>验收：</b>网页问答 · 引用卡片 · 原文抽屉</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="road-kpis">
+        <div><b>5</b><span>类输入格式 · 图文可解析</span></div>
+        <div><b>3</b><span>路混合召回 · 互补盲区</span></div>
+        <div><b>100%</b><span>回答带引用 · 可回原文</span></div>
+        <div><b>19</b><span>测试用例 · 全部通过</span></div>
+      </div>
+
+      <div class="foot"><span><b>DocQA</b> · 1–3 步构建核心闭环，4–5 步面向团队与领域规模演进</span><span class="page-no"><b>05</b> / 10</span></div>
+    </div>
+  </section>
+
+  <!-- ========================================================== 6 doc2md -->
+  <section class="slide" id="s6">
+    <div class="slide-inner">
+      <div class="head-row">
+        <div>
+          <div class="kicker">doc2md</div>
+          <h2 class="title" style="font-size:36px">doc2md：多模态文档解析引擎</h2>
+          <div class="subtitle" style="font-size:13px">第一步产出 · 让图片里的知识变得可检索</div>
+        </div>
+        <div class="head-note">PDF / Word / PPT → 结构化 Markdown + 图片 AI 释义</div>
+      </div>
+
+      <div class="split-55">
+        <div>
+          <div class="panel" style="height:100%;display:flex;flex-direction:column">
+            <div class="panel-title"><span class="dot"></span>解析流水线<span class="tag">六步 · 图文一体</span></div>
+            <div class="pipe">
+              <div class="pipe-step"><div class="n">①</div><b>多格式输入</b><span>PDF · Word · PPT 等多模态文档</span></div>
+              <div class="pipe-step"><div class="n">②</div><b>格式统一转换</b><span>全量转为 Markdown 标准结构；后续可平行扩展 Visio、Drawio 等</span></div>
+              <div class="pipe-step"><div class="n">③</div><b>图片提取</b><span>OCR 技术提取位图 + 矢量图</span></div>
+              <div class="pipe-step"><div class="n">④</div><b>VL 模型释义</b><span>Qwen3.6-27B-VL 解析图片内容</span></div>
+              <div class="pipe-step"><div class="n">⑤</div><b>图片描述写入 MD</b><span>AI 释义随图入库，图文一体</span></div>
+              <div class="pipe-step"><div class="n">⑥</div><b>结构化 Markdown 输出</b><span>供 RAG 切片与 Agent 消费</span></div>
+            </div>
+
+            <div class="naming">
+              <h4>溯源命名规范（关键设计）</h4>
+              <div class="name">文档名_Page图序_Figure标题</div>
+              <p>保留对原始文档的链接关系；任意图片可逆向定位到原文档、页码与图题。</p>
+              <div class="vl-sample"><b>写回示例</b><code>![图 2-1](assets/..._Page2_Fig1_分组转发呼叫接续流程.png)</code><p>&gt; 图 2-1（VL 释义）：注册 → 鉴权 → 号码分析 → 中继选路 → 媒体协商 → 通话建立</p></div>
+              <div class="mini-spec">
+                <div><b>输入格式</b>PDF · DOCX · PPTX · MD · TXT</div>
+                <div><b>页码策略</b>PDF / PPT = exact；DOCX = estimated</div>
+                <div><b>失败降级</b>缺图保留引用；EMF/WMF 告警；VL 失败回退 Mock</div>
+                <div><b>产物清单</b>document.md · assets/ · manifest.json</div>
+                <div><b>质量校验</b>图文互证 · 命名可逆 · 页码可回</div>
+              </div>
+              <div class="fmt-table">
+                <div><b>PDF</b><span>pypdf · page exact · 嵌入图</span></div>
+                <div><b>DOCX</b><span>OOXML · page estimated · 表格/图片</span></div>
+                <div><b>PPTX</b><span>幻灯片 · page exact · 一页一图</span></div>
+              </div>
+              <div class="quote-demo" style="margin-top:5px">data/parsed/&lt;doc&gt;/ · document.md · assets/ · manifest.json</div>
+            </div>
+
+            <div class="onesentence" style="margin-top:auto">doc2md 把“看不懂的图”变成“读得懂的文”，<b>让多模态知识第一次进入可检索、可问答的领域</b>。</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:9px;min-height:0">
+          <div class="panel" style="flex:1">
+            <div class="panel-title teal"><span class="dot"></span>能力矩阵与设计考量<span class="tag">全格式 · 双形态 · 深释义</span></div>
+            <div class="matrix">
+              <div class="m"><b>全格式覆盖</b><span>PDF / Word / PPT 统一入口，后续可平行扩展 Visio、Drawio 等。</span></div>
+              <div class="m"><b>双形态图片</b><span>位图直连 OCR；矢量图先渲染为位图再识别，流程图/架构图全覆盖。</span></div>
+              <div class="m"><b>VL 深度释义</b><span>不止 OCR 文字，还理解图中模块、箭头、编号等结构化语义。</span></div>
+              <div class="m"><b>图文一体入库</b><span>图片释义写在原图引用处，切片后图文语义不割裂，检索上下文完整。</span></div>
+            </div>
+            <div class="quality-chips"><span class="chip teal">命名可逆</span><span class="chip blue">释义可读</span><span class="chip green">页码可回</span><span class="chip orange">切片不割裂</span></div>
+            <div class="impl-grid">
+              <div><b>parser.py</b><span>统一入口 + 类型分发</span></div>
+              <div><b>image_extractor.py</b><span>保存 / 尺寸 / 命名</span></div>
+              <div><b>vl_client.py</b><span>端点注入 + Mock</span></div>
+              <div><b>manifest.json</b><span>图片清单 / 统计 / 告警</span></div>
+            </div>
+          </div>
+
+          <div class="panel" style="flex:1">
+            <div class="panel-title orange"><span class="dot"></span>为什么这一步是整个系统的基石？</div>
+            <div class="why" style="margin-top:0;border:0;padding:0;background:transparent">
+              <ul>
+                <li>技术文档中约 <b>30%–50%</b> 的关键信息以图片承载（架构图/流程图/时序图/状态机）。</li>
+                <li>传统 RAG 只切文本，图片信息全部丢失——本工具将图片转化为自然语言描述。</li>
+                <li>VL 释义与原文档名、页码、图题绑定，回答时可“图文互证”并回溯原文。</li>
+                <li>Markdown 是 Agent 最友好的知识格式，为后续 RAG 切片提供最佳载体。</li>
+              </ul>
+            </div>
+            <div class="onesentence" style="margin-top:6px">30%–50% 的图片信息，不再沉默。</div>
+            <div class="edge-list">
+              <div><b>扫描件</b>需 OCR 兜底，先文字后 VL</div>
+              <div><b>矢量图</b>当前跳过并告警，可接 PyMuPDF 渲染</div>
+              <div><b>原则</b>描述不做结论，结论仍由文本证据支撑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot"><span><b>doc2md</b> · 多模态文档 → 结构化 Markdown 的转换引擎</span><span class="page-no"><b>06</b> / 10</span></div>
+    </div>
+  </section>
+
+  <!-- ========================================================= 7 docbase -->
+  <section class="slide" id="s7">
+    <div class="slide-inner">
+      <div class="head-row">
+        <div>
+          <div class="kicker">DocBase</div>
+          <h2 class="title" style="font-size:36px">DocBase：三路混合检索 RAG 引擎</h2>
+          <div class="subtitle" style="font-size:13px">第二步产出 · 稠密向量 + BM25 + BGE-M3 稀疏检索，RRF 融合，Reranker 精排</div>
+        </div>
+        <div class="head-note">build 入库 · query 检索 · test 质量自评</div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <div class="panel-title teal"><span class="dot"></span>build 模式 · 知识入库流水线<span class="tag">进度条可视化</span></div>
+        <div class="build-flow">
+          <div class="node teal"><b>Markdown 文档集</b><span>多文档 · 支持分类</span></div><div class="arrow"></div>
+          <div class="node teal"><b>语义切片 Chunk</b><span>按结构切分保留上下文</span></div><div class="arrow"></div>
+          <div class="node teal"><b>Embedding 向量化</b><span>Qwen3-Embedding-8B</span></div><div class="arrow"></div>
+          <div class="node teal"><b>稀疏索引构建</b><span>BM25 词频 + BGE-M3 稀疏</span></div><div class="arrow"></div>
+          <div class="node teal"><b>向量数据库落盘</b><span>本地持久化 · 增量更新</span></div>
+        </div>
+        <div class="progress"><span>build</span><div class="bar"><i></i></div><span>解析 → 切片 → 向量化 → 索引 → 落盘 · 进度条实时显示</span></div>
+        <div class="small" style="margin-top:3px;color:#7a90a2">三种工作模式：build 构建知识库（进度条显示）/ query 查询 / test 检索效果自测 · 支持多文档、文档分类管理</div>
+      </div>
+
+      <div class="panel" style="margin-top:10px;flex:1;display:flex;flex-direction:column">
+        <div class="panel-title"><span class="dot"></span>query 模式 · 三路召回 → 融合 → 精排 → TOP-K<span class="tag">任一路异常自动降级可用</span></div>
+        <div class="query-row">
+          <div class="q-routes">
+            <div class="q-route"><b>① 稠密向量检索</b>语义相似度匹配（Embedding）</div>
+            <div class="q-route"><b>② BM25 关键词检索</b>精确术语命中（型号/命令/接口名）</div>
+            <div class="q-route"><b>③ BGE-M3 稀疏检索</b>学习型稀疏向量，兼顾词面权重</div>
+          </div>
+          <div class="arrow" style="flex:0 0 14px"></div>
+          <div class="q-box"><b>RRF 融合</b>倒数排序<br>融合多路结果</div>
+          <div class="arrow" style="flex:0 0 14px"></div>
+          <div class="q-box"><b>Reranker 精排</b>Qwen3-Reranker-8B<br>交叉编码</div>
+          <div class="arrow" style="flex:0 0 14px"></div>
+          <div class="q-box green"><b>TOP-K 文本块</b>携带溯源<br>元数据输出</div>
+          <div class="arrow" style="flex:0 0 14px"></div>
+          <div class="q-box orange"><b>供 Agent 综合回答</b>test 模式<br>量化评估检索质量</div>
+        </div>
+
+        <div class="why3">
+          <b>为什么要三路混合？</b>
+          <p>纯向量检索对 <em>“SD5993”</em> <em>“FE_HEART_Start”</em> 这类精确术语容易模糊命中；纯关键词检索无法理解 <em>“分机转发是怎么走的”</em> 这类语义问题。<b>三路召回互补盲区 + RRF 消除量纲差异 + Reranker 交叉编码精排</b>——兼顾语义理解与术语精确，这是检索质量的关键保障。</p>
+        </div>
+
+        <div class="search-demo"><b>一次真实检索（演示索引）</b><p>query：<em>SD5993 单板怎么复位？命令是什么？</em> → 稠密 0.219 · BM25 7.63 · 稀疏 0.07 → RRF 融合 → Reranker <em>1.00</em> → TOP-1《03_SD5993单板命令手册》Page 2 · Fig 1。</p></div>
+        <div class="db-params">
+          <div><b>build</b><span>chunk=1200 · overlap=120 · 增量复用</span></div>
+          <div><b>query</b><span>三路各 top-50 · RRF k=60 · 精排 top-24</span></div>
+          <div><b>test</b><span>recall@6 · hit_rate · MRR · JSON 报告</span></div>
+        </div>
+        <div class="db-foot">
+          <div class="d"><b>索引三件套</b><span>index.json · vectors.json · sparse.json<br>版本化落盘，支持增量与回滚</span></div>
+          <div class="d"><b>评估指标</b><span>recall@k · hit_rate · MRR<br>keyword_hit_rate · 平均耗时</span></div>
+          <div class="d"><b>降级策略</b><span>单路失败 → 其余两路继续<br>Reranker/Chat 失败 → RRF / 抽取式</span></div>
+        </div>
+        <div class="mode-cards">
+          <div><b>build</b><code>./run.sh build data/parsed --incremental</code></div>
+          <div><b>query</b><code>./run.sh query "分机怎么转发？" --top-k 6</code></div>
+          <div><b>test</b><code>./run.sh eval --index data/index</code></div>
+        </div>
+        <div style="margin-top:auto;display:flex;gap:6px;justify-content:flex-end">
+          <span class="chip teal">build 建库</span><span class="chip blue">query 检索</span><span class="chip orange">test 评估</span>
+        </div>
+      </div>
+
+      <div class="foot"><span><b>DocBase</b> · build 入库 / query 三路混合检索 / test 质量自评</span><span class="page-no"><b>07</b> / 10</span></div>
+    </div>
+  </section>
+
+  <!-- ========================================================== 8 agents -->
+  <section class="slide" id="s8">
+    <div class="slide-inner">
+      <div class="head-row">
+        <div>
+          <div class="kicker">AGENTS.md</div>
+          <h2 class="title" style="font-size:34px">AGENTS.md：让 Agent 学会“查资料”</h2>
+          <div class="subtitle" style="font-size:13px">第三步产出 · 本创意的核心差异点 —— 用约定文件驱动 Agent 消费 RAG</div>
+        </div>
+        <div class="head-note">RAG 不会自动被使用，必须有人“告诉”Agent 它的存在、用法与边界</div>
+      </div>
+
+      <div class="agents-grid">
+        <div class="agents-left">
+          <div class="panel">
+            <div class="panel-title"><span class="dot"></span>AGENTS.md 是什么</div>
+            <ul class="about-list">
+              <li>CodeAgent（Claude Code / NGA 等）启动时<b>自动加载的项目级指令文件</b></li>
+              <li>声明本仓库存在 <b>DocBase RAG 知识库</b>，并约定何时查、怎么查、如何引用</li>
+              <li>把“人的检索经验”固化为 <b>Agent 可执行的工作流约定</b></li>
+              <li>用户无需学习任何命令 —— 像跟同事对话一样提问即可</li>
+            </ul>
+          </div>
+
+          <div class="insight">
+            <h4>关键洞察</h4>
+            <p>RAG 数据库本身不会自动被使用 —— 必须有人“告诉”Agent 它的存在、用法与边界。<b>AGENTS.md 就是这座桥梁</b>，也是本创意区别于传统 RAG 产品的核心创新点。</p>
+          </div>
+
+          <div class="panel" style="flex:1">
+            <div class="panel-title orange"><span class="dot"></span>生效机制<span class="tag">约定先于回答</span></div>
+            <div class="mechanism">
+              <div><b>启动时</b><span>CodeAgent 自动加载 AGENTS.md，知道库存在</span></div>
+              <div><b>检索前</b><span>按问题类型选择 BM25 / 向量 / 分类过滤</span></div>
+              <div><b>回答前</b><span>校验 [n] 与原文定位，不足则无据不答</span></div>
+            </div>
+            <div class="compare">
+              <div><b>传统 RAG</b><span>检索接口是“可选能力”，Agent 不知道库存在</span></div>
+              <div class="new"><b>DocQA</b><span>约定是“默认工作方式”，每次回答先检索</span></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title teal"><span class="dot"></span>落地效果</div>
+            <div class="effect-grid">
+              <div><b>回答有据</b><span>每条结论 [n] + 文档名 / 页码 / 图号</span></div>
+              <div><b>无据会拒</b><span>域外问题明确说不知道，不编造</span></div>
+              <div><b>换模型不换约定</b><span>GLM / Mock 输出同一契约</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="display:flex;flex-direction:column">
+          <div class="panel-title"><span class="dot"></span>Agent 问答工作流<span class="tag">S 形：提问 → 检索 → 综合 → 呈现 → 溯源</span></div>
+          <div class="flow8">
+            <div class="node blue"><b>接收提问</b><span>自然语言问题</span></div>
+            <div class="node blue"><b>意图分析</b><span>拆解为检索词</span></div>
+            <div class="node blue"><b>执行 RAG 查询</b><span>调用 DocBase</span></div>
+            <div class="node blue"><b>补充检索</b><span>信息不足时多轮</span></div>
+            <div class="node teal"><b>筛选整合</b><span>TOP-K 文本块</span></div>
+            <div class="node teal"><b>GLM-5.1 综合</b><span>多文档交叉推理</span></div>
+            <div class="node teal"><b>结构化呈现</b><span>Mermaid / 表格</span></div>
+            <div class="node orange"><b>溯源输出</b><span>定位原始文档</span></div>
+          </div>
+          <div class="sflow"><b>S 形工作流：</b>提问 → 检索 → 综合 → 呈现 → 溯源，全程由 AGENTS.md 约定驱动；Agent 可自主判断“答案够不够好”，不足时自动发起第二轮检索。</div>
+
+          <div class="panel" style="margin-top:8px;background:#f8fcfe">
+            <div class="panel-title orange"><span class="dot"></span>典型约定（节选示意）</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+              <div class="convention"><b>知识库存在性声明</b><span>“本仓库配备 DocBase RAG 库，回答领域问题前必须先检索”</span></div>
+              <div class="convention"><b>查询策略约定</b><span>“按文档分类缩小范围；技术名词走 BM25，原理问题走向量检索”</span></div>
+              <div class="convention"><b>溯源强制要求</b><span>“回答必须附原文链接与定位信息（文档名/页码/图号），无据不答”</span></div>
+              <div class="convention"><b>产出形式约定</b><span>“流程类问题用 Mermaid 绘图辅助说明，并与原始图片对照验证”</span></div>
+            </div>
+            <div class="tiny" style="margin-top:6px;color:#7a5a2c;background:#fdf8f2;border-radius:4px;padding:4px 6px">把检索经验写进约定，让 Agent 的每次回答都有据可查。</div>
+            <div class="contract-chips"><span class="chip blue">answer</span><span class="chip teal">format</span><span class="chip green">citations</span><span class="chip orange">rounds_used</span></div>
+            <div class="tiny" style="margin-top:3px;color:#7a90a2">answer_question 契约：字段只增不改，WebQueryResponse 对齐。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="agents-code">
+        <div class="code-card"><b>## 1. 存在性声明</b>
+- 本仓库配备 DocBase RAG 知识库，索引位于 data/index/
+- 回答 FE_HEART / SD5993 / 分组转发 / 运维问题前，必须先检索
+- 不得凭模型记忆直接回答，不得编造文档名、页码、图号</div>
+        <div class="code-card"><b>## 3. 溯源强制</b>
+- 每个结论后标注 [n]，附文档名 / 页码 / 图号
+- 一个 [n] 只对应一个文本块，不同文档不得合并编号
+- 无据不答：检索不足时直接说明，不用常识补全</div>
+      </div>
+
+      <div class="agents-summary">不是提供一个检索接口，而是让 Agent 养成“先查资料”的默认工作方式。</div>
+
+      <div class="foot"><span><b>AGENTS.md</b> · 把检索经验写进约定，让 Agent 的每次回答都有据可查</span><span class="page-no"><b>08</b> / 10</span></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ 9 demo -->
+  <section class="slide" id="s9">
+    <div class="slide-inner">
+      <div class="head-row">
+        <div>
+          <div class="kicker">Delivery</div>
+          <h2 class="title" style="font-size:36px">可运行交付物 · 一条命令跑通全链路</h2>
+          <div class="subtitle" style="font-size:13px">parse → build → ask → eval · 19 项测试 · CLI / Web / watcher 三入口</div>
+        </div>
+        <div class="head-note">Mock 模式 · 离线可复现 · 真实端点可切换</div>
+      </div>
+
+      <div class="demo-grid">
+        <div style="display:flex;flex-direction:column;gap:8px;min-height:0">
+          <div class="terminal" style="flex:1">
+            <div class="terminal-bar"><i></i><i></i><i></i><span>DocQA · demo</span></div>
+            <div class="terminal-body"><span class="m">$</span> ./run.sh demo
+<span class="c">DocQA Demo · 多模态文档 → 知识库 → Agent 问答</span>
+
+<span class="p">①</span> 解析示例文档（doc2md · Mock VL 释义）
+   <span class="g">5 个文档 · 3 张图片</span>
+
+<span class="p">②</span> 构建三路混合索引（DocBase）
+   <span class="g">32 个文本块 · 版本 2026.10.24-xxxxxx</span>
+
+<span class="p">③</span> Agent 问答（AGENTS.md 约定驱动）
+<span class="y">Q:</span> 分机注册后，呼叫是怎么转发到中继的？
+<span class="c">**结论**：分机注册后，呼叫接续按以下六个步骤执行： [1]</span>
+1. 分机注册 → 2. 鉴权 → 3. 号码分析
+4. 中继选路 → 5. 媒体协商 → 6. 通话建立
+<span class="c">**流程重绘（Mermaid）**</span>
+  A[分机注册] → B[鉴权] → C[号码分析] → D[中继选路] …
+<span class="m">> 可与《02_分组转发设计》Page 2 · Fig 1 原图对照</span>
+
+<span class="p">④</span> 检索质量评估（test 模式）
+   <span class="g">recall@6=1.0  hit_rate=1.0  MRR=1.0</span>
+
+<span class="m">$</span> ./run.sh serve --open        <span class="m"># B/S 问答</span>
+<span class="m">$</span> ./run.sh watch --src docs --once  <span class="m"># 增量</span>
+</div>
+          </div>
+          <div class="metric-row">
+            <div class="metric"><b>1.00</b><span>recall@6 · 演示集</span></div>
+            <div class="metric"><b>19</b><span>测试用例通过</span></div>
+            <div class="metric"><b>2 ms</b><span>Mock 检索耗时</span></div>
+          </div>
+          <div class="note">指标为 5 篇演示文档 / 8 条问题 / Mock 链路结果，仅证明链路与口径；生产验收需接入真实端点并重建测试集。</div>
+        </div>
+
+        <div class="shot-stack">
+          <div class="shot"><span class="label">Web · 问答与引用</span><img src="../assets/web-answer.png" alt="DocQA Web 问答界面"></div>
+          <div class="shot"><span class="label">Web · 知识库入口</span><img src="../assets/web-home.png" alt="DocQA Web 欢迎页"></div>
+          <div class="deliverables">
+            <div class="deliverable"><i></i><b>代码</b>src/docqa · 标准库运行时</div>
+            <div class="deliverable"><i></i><b>约定</b>AGENTS.md / CLAUDE.md</div>
+            <div class="deliverable"><i></i><b>文档</b>项目书 / 技术设计 / 实施验收 / 讲稿</div>
+            <div class="deliverable"><i></i><b>汇报</b>Deck HTML + PDF · 10 页</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot"><span><b>DocQA</b> · 可运行交付物</span><span class="page-no"><b>09</b> / 10</span></div>
+    </div>
+  </section>
+
+  <!-- =========================================================== 10 close -->
+  <section class="slide close" id="s10">
+    <div class="slide-inner">
+      <div class="kicker">Thank You</div>
+      <h2>让每一份沉睡的本地文档<br><span>都能开口说话。</span></h2>
+      <div class="three">
+        <div><b>doc2md</b><span>把“看不懂的图”变成“读得懂的文”，让图片进入检索。</span></div>
+        <div><b>DocBase</b><span>三路召回 + RRF + 精排，兼顾术语精确与语义理解。</span></div>
+        <div><b>AGENTS.md</b><span>把检索经验写进约定，让 Agent 先查资料、再回答、必溯源。</span></div>
+      </div>
+      <div class="thanks">谢谢各位评委 <b>Q &amp; A</b></div>
+      <div class="meta">井永乐 | 00587807 · 转发开发部 [ICT BG] · 2026-07-30</div>
+      <div class="foot"><span><b>DocQA</b> · 基于 AI Agent 的个人本地多模态文档智能问答系统</span><span class="page-no"><b>10</b> / 10</span></div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="上一页">←</button>
+  <span class="count" id="count">1 / 10</span>
+  <button id="next" aria-label="下一页">→</button>
+  <button class="print" id="print" title="打印 / 导出 PDF">PDF</button>
+</div>
+<div class="hint">← → / 空格切换 · 点击 PDF 导出</div>
+
+<script>
+(() => {
+  "use strict";
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const stage = document.getElementById("stage");
+  const count = document.getElementById("count");
+  let index = 0;
+
+  function fit() {
+    const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900) * 0.94;
+    stage.style.transform = `scale(${scale})`;
+  }
+  function show(next) {
+    index = Math.max(0, Math.min(slides.length - 1, next));
+    slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+    count.textContent = `${index + 1} / ${slides.length}`;
+    history.replaceState(null, "", `#${index + 1}`);
+  }
+  function step(delta) { show(index + delta); }
+
+  document.getElementById("prev").addEventListener("click", () => step(-1));
+  document.getElementById("next").addEventListener("click", () => step(1));
+  document.getElementById("print").addEventListener("click", () => window.print());
+  window.addEventListener("keydown", (event) => {
+    if (["ArrowRight", "PageDown", " "].includes(event.key)) { event.preventDefault(); step(1); }
+    if (["ArrowLeft", "PageUp"].includes(event.key)) { event.preventDefault(); step(-1); }
+    if (event.key === "Home") { event.preventDefault(); show(0); }
+    if (event.key === "End") { event.preventDefault(); show(slides.length - 1); }
+    if (event.key.toLowerCase() === "f") { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  });
+  window.addEventListener("resize", fit);
+  const hash = Number(location.hash.replace("#", ""));
+  show(Number.isFinite(hash) && hash >= 1 ? hash - 1 : 0);
+  fit();
+})();
+</script>
+</body>
+</html>

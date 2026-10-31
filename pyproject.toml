@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docqa-local"
+version = "1.0.0"
+description = "FGDocQA · 基于 AI Agent 的个人本地多模态文档智能问答系统"
+requires-python = ">=3.9"
+authors = [{ name = "井永乐" }]
+dependencies = []
+
+[project.optional-dependencies]
+pdf = ["pypdf>=3.9", "pillow>=9.0"]
+
+[project.scripts]
+docqa = "docqa.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"docqa.web" = ["static/*"]

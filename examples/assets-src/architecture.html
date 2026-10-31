@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1200px; height: 750px;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #ffffff; color: #17324d; padding: 44px 56px;
+    background-image: radial-gradient(#dbe8f3 0.8px, transparent 0.8px);
+    background-size: 22px 22px;
+  }
+  .h { display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 26px; }
+  .h h1 { font-size: 30px; letter-spacing: .5px; }
+  .h span { font-size: 14px; color: #71879b; }
+  .layer { display:flex; align-items:stretch; gap: 18px; margin-bottom: 30px; position: relative; }
+  .tag {
+    width: 132px; border-radius: 12px; color:#fff; padding: 16px 14px;
+    display:flex; flex-direction:column; justify-content:center; gap:6px;
+  }
+  .tag b { font-size: 17px; }
+  .tag small { font-size: 11px; opacity:.85; line-height:1.5; }
+  .access .tag { background: linear-gradient(160deg,#2f7fd1,#1d5fa8); }
+  .control .tag { background: linear-gradient(160deg,#0f8f84,#0a6c65); }
+  .media .tag { background: linear-gradient(160deg,#d9822b,#b96318); }
+  .nodes { flex:1; display:flex; gap:14px; align-items:stretch; }
+  .node {
+    flex:1; background:#fff; border:1.4px solid #c7d9e8; border-radius: 10px;
+    padding: 16px 14px; box-shadow: 0 4px 12px rgba(28,74,112,.06);
+    display:flex; flex-direction:column; gap:8px; position: relative;
+  }
+  .node b { font-size: 16px; color:#123a5e; }
+  .node small { font-size: 12px; color:#60798f; line-height:1.55; }
+  .node em { font-style:normal; font-size: 11px; color:#8aa0b3; margin-top:auto; }
+  .node::after {
+    content:""; position:absolute; left:-14px; top:50%; width:14px; height:2px; background:#a9c3d8;
+  }
+  .node:first-child::after { display:none; }
+  .node::before {
+    content:""; position:absolute; left:-6px; top:calc(50% - 4px);
+    border:4px solid transparent; border-left-color:#a9c3d8; display:none;
+  }
+  .access .node { border-top: 4px solid #2f7fd1; }
+  .control .node { border-top: 4px solid #0f8f84; }
+  .media .node { border-top: 4px solid #d9822b; }
+  .link {
+    height: 28px; margin-left: 150px; display:flex; align-items:center; gap:12px;
+    color:#5c7892; font-size: 12px;
+  }
+  .link i { flex:1; height:2px; background: linear-gradient(90deg,#a9c3d8,#7fa6c5); position:relative; }
+  .link i::after {
+    content:""; position:absolute; right:-1px; top:-4px;
+    border:5px solid transparent; border-left-color:#7fa6c5;
+  }
+  .foot { display:flex; justify-content:space-between; font-size:12px; color:#7c91a4; margin-top: 6px; }
+  .pill { display:inline-block; padding:3px 9px; border-radius:999px; background:#eef5fb; color:#3d6c96; font-size:11px; }
+</style>
+</head>
+<body>
+  <div class="h">
+    <h1>FE_HEART 三层总体架构</h1>
+    <span>版本 v2.3.0 · 逻辑视图</span>
+  </div>
+
+  <div class="layer access">
+    <div class="tag"><b>接入层</b><small>SIP / IAD / 中继<br>协议适配与安全接入</small></div>
+    <div class="nodes">
+      <div class="node"><b>SIP 分机</b><small>REGISTER 注册<br>INVITE 呼入呼出</small><em>SIP over UDP/TLS</em></div>
+      <div class="node"><b>IAD 网关</b><small>模拟话机接入<br>号码映射</small><em>SIP / MGCP</em></div>
+      <div class="node"><b>中继网关</b><small>运营商 IMS 对接<br>号码归一化</small><em>SIP Trunk</em></div>
+      <div class="node"><b>Web 管理入口</b><small>配置、监控、话单查询</small><em>HTTPS / REST</em></div>
+    </div>
+  </div>
+
+  <div class="link"><span>SIP 信令</span><i></i><span>内部消息总线</span></div>
+
+  <div class="layer control">
+    <div class="tag"><b>控制层</b><small>呼叫接续的大脑<br>号码分析与中继选路</small></div>
+    <div class="nodes">
+      <div class="node"><b>呼叫控制</b><small>呼叫状态机<br>振铃 / 转接 / 释放</small><em>Call-ID 全链路关联</em></div>
+      <div class="node"><b>号码分析</b><small>号码规范化<br>前缀匹配与路由决策</small><em>配置热加载</em></div>
+      <div class="node"><b>中继选路</b><small>主备倒换<br>负荷分担</small><em>3 秒内自动倒换</em></div>
+      <div class="node"><b>业务编排</b><small>呼叫前转、群振铃<br>排队与放音策略</small><em>可视化编排</em></div>
+    </div>
+  </div>
+
+  <div class="link"><span>SIP / RTP</span><i></i><span>媒体控制 API</span></div>
+
+  <div class="layer media">
+    <div class="tag"><b>媒体层</b><small>媒体资源池化<br>由 SD5993 单板承载</small></div>
+    <div class="nodes">
+      <div class="node"><b>SD5993 槽位 1</b><small>放音 / 录音<br>DTMF 检测</small><em>资源占用 62%</em></div>
+      <div class="node"><b>SD5993 槽位 2</b><small>会议混音<br>视频转码</small><em>资源占用 48%</em></div>
+      <div class="node"><b>SD5993 槽位 3</b><small>媒体录制<br>异常倒换</small><em>资源占用 35%</em></div>
+      <div class="node"><b>资源调度器</b><small>按负荷分配单板<br>故障自动隔离</small><em>健康检查 10s</em></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>接入层负责协议适配 · 控制层负责呼叫决策 · 媒体层负责媒体处理</span>
+    <span class="pill">分层解耦 · 独立扩容 · 配置与代码分离</span>
+  </div>
+</body>
+</html>

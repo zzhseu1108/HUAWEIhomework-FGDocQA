@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>DocQA 实施与验收</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: #1b2f42; background: #fff;
+    font-family: "Songti SC", "STSong", "SimSun", serif;
+    font-size: 10.6pt; line-height: 1.9;
+  }
+  .cover {
+    min-height: 245mm; display: flex; flex-direction: column; justify-content: center;
+    text-align: center; page-break-after: always; padding: 22mm 10mm;
+    background: linear-gradient(150deg, #f7fbfe, #eaf4fb);
+    border-top: 6px solid #1f6fb2; border-bottom: 6px solid #0f8a7e;
+  }
+  .cover .award { font-size: 11pt; color: #1f6fb2; letter-spacing: 1px; margin-bottom: 14mm; }
+  .cover h1 {
+    font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    font-size: 26pt; line-height: 1.4; color: #0b2a5b; margin: 0 0 8mm;
+  }
+  .cover .sub { font-size: 12pt; color: #3d6788; margin-bottom: 18mm; }
+  .cover .abstract {
+    text-align: left; font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    font-size: 9.6pt; line-height: 1.95; color: #2f4f68;
+    border: 1px solid #a9cde6; background: rgba(255,255,255,.72);
+    padding: 7mm 9mm; border-radius: 3mm;
+  }
+  .cover .abstract b { color: #0f7a71; }
+  .cover .meta { margin-top: 20mm; font-size: 9.5pt; color: #607c92; line-height: 2; }
+  h1, h2, h3, h4 {
+    font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    color: #0b2a5b; line-height: 1.45; page-break-after: avoid;
+  }
+  h1 { font-size: 20pt; margin: 0 0 6mm; padding-bottom: 3mm; border-bottom: 2px solid #1f6fb2; }
+  h2 { font-size: 14pt; margin: 9mm 0 3mm; padding-left: 3mm; border-left: 3px solid #0f8a7e; }
+  h3 { font-size: 12pt; margin: 6mm 0 2mm; }
+  h4 { font-size: 10.8pt; margin: 4mm 0 1.5mm; }
+  p { margin: 2.2mm 0; text-align: justify; }
+  strong { color: #0b3d6b; }
+  a { color: #1f6fb2; text-decoration: none; }
+  ul, ol { margin: 2mm 0 2mm 6mm; padding-left: 5mm; }
+  li { margin: 1mm 0; }
+  blockquote {
+    margin: 3mm 0; padding: 2.5mm 4mm; border-left: 3px solid #8fc0e2;
+    background: #f3f9fd; color: #3d5d75; font-size: 9.8pt;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 9pt;
+    background: #f0f6fa; color: #17619d; padding: 0.3mm 1.2mm; border-radius: 1mm;
+  }
+  pre {
+    background: #f6f9fb; border: 1px solid #dbe8f2; border-radius: 2mm;
+    padding: 3mm 4mm; overflow: auto; page-break-inside: avoid;
+  }
+  pre code { background: none; padding: 0; color: #2f4f68; font-size: 8.4pt; line-height: 1.55; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th, td { border: 1px solid #c9dcea; padding: 1.6mm 2.2mm; text-align: left; vertical-align: top; }
+  th { background: #eaf4fc; color: #12456d; font-family: "PingFang SC", sans-serif; font-weight: 600; }
+  tr:nth-child(even) td { background: #fbfdff; }
+  hr { border: 0; border-top: 1px dashed #c9dcea; margin: 5mm 0; }
+  .footer-note { margin-top: 12mm; padding-top: 3mm; border-top: 1px solid #dbe8f2;
+                  font-size: 8.4pt; color: #7a90a2; font-family: "PingFang SC", sans-serif; }
+  @media print { .cover { min-height: 250mm; } }
+</style>
+</head>
+<body>
+
+<h1 id="DocQA-实施与验收">DocQA 实施与验收</h1>
+<blockquote>配套文档：<a href="01_项目申报书.md">项目申报书</a> · <a href="02_技术设计说明书.md">技术设计说明书</a> · <a href="04_答辩讲稿.md">答辩讲稿</a></blockquote>
+<hr>
+<h2 id="1-实施策略">1. 实施策略</h2>
+<h3 id="1-1-一句话">1.1 一句话</h3>
+<p><strong>AI 写代码，人做决策。</strong></p>
+<ul>
+<li>CodeAgent 负责：脚手架、解析器、索引器、CLI、Web、测试、文档初稿；</li>
+<li>人负责：问题定义、架构取舍、契约评审、指标口径、验收与答辩。</li>
+</ul>
+<h3 id="1-2-五步渐进">1.2 五步渐进</h3>
+<table>
+<thead><tr><th>步骤</th><th>名称</th><th>定位</th><th>状态</th><th>退出条件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>doc2md</td><td>基础必做</td><td>已完成 Demo</td><td>5 类格式可解析；图片有释义与溯源</td></tr>
+<tr><td>2</td><td>DocBase</td><td>基础必做</td><td>已完成 Demo</td><td>build/query/test 可运行；三路召回 + RRF + 精排</td></tr>
+<tr><td>3</td><td>AGENTS.md</td><td>基础必做</td><td>已完成 Demo</td><td>约定四类；回答带 <code>[n]</code>；无据拒答</td></tr>
+<tr><td>4</td><td>Service</td><td>可选扩展 · 团队级</td><td>已提供实现</td><td>watcher 可增量更新；事件可审计</td></tr>
+<tr><td>5</td><td>Web</td><td>可选扩展 · 领域级</td><td>已提供实现</td><td>浏览器问答；引用可打开原文</td></tr>
+</tbody></table>
+<p><strong>1–3 步构建核心闭环，4–5 步面向团队与领域规模演进。</strong></p>
+<hr>
+<h2 id="2-工作分解-WBS">2. 工作分解（WBS）</h2>
+<h3 id="2-1-第-1-步-doc2md">2.1 第 1 步：doc2md</h3>
+<table>
+<thead><tr><th>任务</th><th>产出</th><th>验收</th></tr></thead>
+<tbody>
+<tr><td>格式识别与统一入口</td><td><code>detect_doc_type</code> / <code>parse_document</code></td><td><code>.md/.pdf/.docx/.pptx/.txt</code> 均可解析</td></tr>
+<tr><td>Markdown 图片处理</td><td>图片复制、重命名、引用替换</td><td>命名符合 <code>文档名_Page_Fig_标题</code></td></tr>
+<tr><td>PDF 解析</td><td>逐页文本 + 嵌入图</td><td>页码 exact；图片带图题</td></tr>
+<tr><td>DOCX 解析</td><td>OOXML 段落/表格/图片</td><td>页码 estimated 明示</td></tr>
+<tr><td>PPTX 解析</td><td>幻灯片文本 + 图片</td><td>一页幻灯片 = 一页</td></tr>
+<tr><td>VL 释义</td><td><code>VLDescriber</code> + Mock</td><td>释义写入正文引用块</td></tr>
+<tr><td>manifest</td><td><code>manifest.json</code></td><td>包含图片、页码、统计、警告</td></tr>
+<tr><td>失败处理</td><td>warning / 明确报错</td><td>不静默丢数据</td></tr>
+</tbody></table>
+<h3 id="2-2-第-2-步-DocBase">2.2 第 2 步：DocBase</h3>
+<table>
+<thead><tr><th>任务</th><th>产出</th><th>验收</th></tr></thead>
+<tbody>
+<tr><td>语义切片</td><td><code>chunker.py</code></td><td>不跨页；代码块完整；超长段按句切</td></tr>
+<tr><td>稠密索引</td><td><code>vectors.json</code></td><td>余弦召回可用</td></tr>
+<tr><td>BM25</td><td><code>sparse.json</code> 的 tf/df</td><td>精确术语命中</td></tr>
+<tr><td>稀疏索引</td><td>归一化权重</td><td>与 BM25 互补</td></tr>
+<tr><td>RRF</td><td><code>retriever.py</code></td><td>三路结果可融合</td></tr>
+<tr><td>Reranker</td><td>真实/Mock</td><td>精排后 TOP-K 合理</td></tr>
+<tr><td>增量建库</td><td>文档哈希 + chunk 复用</td><td>未变更文档不重算</td></tr>
+<tr><td>test 模式</td><td><code>evaluator.py</code></td><td>recall@k / hit_rate / MRR</td></tr>
+<tr><td>降级</td><td>route 级 try/except</td><td>单路异常不拖垮全链路</td></tr>
+</tbody></table>
+<h3 id="2-3-第-3-步-AGENTS-md">2.3 第 3 步：AGENTS.md</h3>
+<table>
+<thead><tr><th>任务</th><th>产出</th><th>验收</th></tr></thead>
+<tbody>
+<tr><td>四类约定</td><td><code>AGENTS.md</code></td><td>存在性/查询/溯源/产出</td></tr>
+<tr><td>Agent 主流程</td><td><code>answer.py</code></td><td>意图、检索、自评、生成</td></tr>
+<tr><td>引用契约</td><td><code>Citation</code></td><td>文档名/页码/图号/链接</td></tr>
+<tr><td>无据不答</td><td>阈值 + 拒答</td><td>域外问题不编造</td></tr>
+<tr><td>多轮检索</td><td><code>max_rounds=2</code></td><td>不足时自动扩展</td></tr>
+<tr><td>结构化产出</td><td>Mermaid / 表格 / 步骤</td><td>与原文对照</td></tr>
+<tr><td>CLI</td><td><code>ask/query/eval</code></td><td>可演示、可脚本化</td></tr>
+</tbody></table>
+<h3 id="2-4-第-4-步-Service-可选">2.4 第 4 步：Service（可选）</h3>
+<table>
+<thead><tr><th>任务</th><th>产出</th><th>验收</th></tr></thead>
+<tbody>
+<tr><td>目录快照</td><td><code>_snapshot</code></td><td>新增/修改/删除可识别</td></tr>
+<tr><td>增量解析</td><td><code>parse_document</code></td><td>仅变更文件重解析</td></tr>
+<tr><td>增量建库</td><td><code>build_index(incremental=True)</code></td><td>索引版本递增</td></tr>
+<tr><td>事件日志</td><td><code>data/watch.log</code></td><td>JSONL 可审计</td></tr>
+<tr><td>单次模式</td><td><code>--once</code></td><td>可用于 CI/手工触发</td></tr>
+</tbody></table>
+<h3 id="2-5-第-5-步-Web-可选">2.5 第 5 步：Web（可选）</h3>
+<table>
+<thead><tr><th>任务</th><th>产出</th><th>验收</th></tr></thead>
+<tbody>
+<tr><td>HTTP 服务</td><td><code>web/server.py</code></td><td>仅本机；无第三方框架</td></tr>
+<tr><td>API</td><td><code>/api/ask</code> <code>/api/stats</code> <code>/api/doc</code></td><td>与 Agent 契约对齐</td></tr>
+<tr><td>前端</td><td><code>static/index.html</code></td><td>问答、引用、原文抽屉</td></tr>
+<tr><td>Mermaid</td><td>轻量 SVG 渲染</td><td>流程类问题图形化</td></tr>
+<tr><td>响应式</td><td>CSS media query</td><td>窄屏可用</td></tr>
+</tbody></table>
+<hr>
+<h2 id="3-演示脚本-可复现">3. 演示脚本（可复现）</h2>
+<h3 id="3-1-环境">3.1 环境</h3>
+<pre><code>cd DocQA
+python3 --version          # 3.9+
+python3 -m pip install -r requirements.txt   # 仅 PDF 解析需要 pypdf
+./run.sh doctor</code></pre>
+<h3 id="3-2-一键-Demo">3.2 一键 Demo</h3>
+<pre><code>./run.sh demo</code></pre>
+<p>预期输出（节选）：</p>
+<pre><code>DocQA Demo · 多模态文档 → 知识库 → Agent 问答
+
+① 解析示例文档（doc2md · Mock VL 释义）
+   5 个文档 · 3 张图片
+
+② 构建三路混合索引（DocBase）
+   32 个文本块 · 版本 2026.10.24-xxxxxx
+
+③ Agent 问答（AGENTS.md 约定驱动）
+Q: 分机注册后，呼叫是怎么转发到中继的？
+**结论**：分机注册后，呼叫接续按以下六个步骤执行： [1]
+...
+**流程重绘（Mermaid）**
+...
+&gt; 上图按知识库中的 Mermaid 源重绘，可与《02_分组转发设计》Page 2 · Fig 1
+「分组转发呼叫接续流程」原图对照验证。
+...
+④ 检索质量评估（test 模式）
+   recall@6=1.0  hit_rate=1.0  MRR=1.0  keyword_hit_rate=1.0</code></pre>
+<h3 id="3-3-分步演示">3.3 分步演示</h3>
+<pre><code># 1) 解析
+./run.sh parse examples/docs --out data/parsed
+
+# 2) 建库（首次全量）
+./run.sh build data/parsed --index data/index
+
+# 3) 只检索：看三路分数与路由
+./run.sh query &quot;SD5993 单板怎么复位？&quot; --top-k 6
+
+# 4) 问答：带轨迹
+./run.sh ask &quot;SD5993 单板怎么复位？命令是什么？&quot; --show-trace
+
+# 5) 流程类：Mermaid + 图号
+./run.sh ask &quot;分机注册后，呼叫是怎么转发到中继的？&quot;
+
+# 6) 无据不答
+./run.sh ask &quot;如何申请年假？&quot;
+
+# 7) 评估
+./run.sh eval --index data/index --report data/eval_report.json
+
+# 8) 增量建库
+./run.sh build data/parsed --index data/index --incremental
+
+# 9) Web
+./run.sh serve --open
+
+# 10) 目录监控（单次）
+./run.sh watch --src examples/docs --once
+
+# 11) 测试
+make test</code></pre>
+<h3 id="3-4-演示话术要点">3.4 演示话术要点</h3>
+<ol>
+<li><strong>先把「找不到文件」的痛点讲具体</strong>：只记得图、不记得文件名。</li>
+<li><strong>展示解析产物</strong>：<code>data/parsed/02_分组转发设计/document.md</code> 中图片已被替换为「图 + 释义 + 元信息」。</li>
+<li><strong>展示三路分数</strong>：<code>query</code> 输出中 <code>dense/bm25/sparse/routes</code> 同屏可见。</li>
+<li><strong>展示引用</strong>：回答末尾 <code>[1]</code> 可打开 <code>#page=2&amp;figure=1</code>。</li>
+<li><strong>展示拒答</strong>：域外问题明确「无据不答」，并给最接近片段。</li>
+<li><strong>展示约定</strong>：打开根目录 <code>AGENTS.md</code>，说明这是「人与 Agent 的检索契约」。</li>
+</ol>
+<hr>
+<h2 id="4-验收标准">4. 验收标准</h2>
+<h3 id="4-1-功能验收">4.1 功能验收</h3>
+<ul>
+<li>[x] <code>parse</code> 支持 Markdown / PDF / DOCX / PPTX / TXT；</li>
+<li>[x] 图片按 <code>文档名_Page_Fig_标题</code> 命名，带 <code>#page=&amp;figure=</code> 链接；</li>
+<li>[x] 解析产物包含 <code>document.md</code> / <code>assets/</code> / <code>manifest.json</code>；</li>
+<li>[x] <code>build</code> 产出三件套索引，支持增量；</li>
+<li>[x] <code>query</code> 返回三路分数与路由名；</li>
+<li>[x] <code>ask</code> 输出「结论 / 关键依据 / 溯源」；</li>
+<li>[x] 流程类回答包含 Mermaid，并给出原图 Page/Fig；</li>
+<li>[x] 命令类回答包含可执行命令与注意事项；</li>
+<li>[x] 版本类回答使用表格；</li>
+<li>[x] 域外问题输出「无据不答」，<code>citations=[]</code>；</li>
+<li>[x] <code>eval</code> 输出 recall@k / hit_rate / MRR / keyword_hit_rate；</li>
+<li>[x] <code>serve</code> 可浏览器问答并查看原文；</li>
+<li>[x] <code>watch --once</code> 可增量更新。</li>
+</ul>
+<h3 id="4-2-非功能验收">4.2 非功能验收</h3>
+<table>
+<thead><tr><th>项</th><th>标准</th><th>现状</th></tr></thead>
+<tbody>
+<tr><td>依赖</td><td>运行时标准库；PDF 可选 pypdf</td><td>满足</td></tr>
+<tr><td>本地性</td><td>默认 Mock 不发网络请求</td><td>满足</td></tr>
+<tr><td>Web 绑定</td><td>默认 <code>127.0.0.1</code></td><td>满足</td></tr>
+<tr><td>可测试</td><td>19 项单测/集成测试</td><td>通过</td></tr>
+<tr><td>可回滚</td><td>索引版本 + 三件套</td><td>满足</td></tr>
+<tr><td>可观测</td><td>trace + watch.log + warnings</td><td>满足</td></tr>
+<tr><td>文档</td><td>项目书/技术设计/实施验收/讲稿/Deck</td><td>满足</td></tr>
+</tbody></table>
+<h3 id="4-3-指标验收">4.3 指标验收</h3>
+<p>以 <code>examples/test_set.json</code> 8 条用例、TOP-6 为准：</p>
+<table>
+<thead><tr><th>指标</th><th>目标</th><th>实测</th></tr></thead>
+<tbody>
+<tr><td><code>recall@6</code></td><td>≥ 0.8</td><td>1.00</td></tr>
+<tr><td><code>hit_rate</code></td><td>≥ 0.8</td><td>1.00</td></tr>
+<tr><td><code>MRR</code></td><td>≥ 0.7</td><td>1.00</td></tr>
+<tr><td><code>keyword_hit_rate</code></td><td>≥ 0.7</td><td>1.00</td></tr>
+<tr><td>无据拒答</td><td>域外问题必须拒答</td><td>通过</td></tr>
+<tr><td>引用可追溯</td><td>100% 回答带 <code>[n]</code></td><td>通过</td></tr>
+</tbody></table>
+<blockquote>演示集为作者自建小样本，指标只证明链路与口径；生产验收需用部门真实文档重建测试集。</blockquote>
+<hr>
+<h2 id="5-运维手册">5. 运维手册</h2>
+<h3 id="5-1-日常">5.1 日常</h3>
+<pre><code># 新增/修改文档后
+./run.sh watch --src &lt;文档目录&gt; --parsed data/parsed --index data/index --once
+
+# 或全量重建
+./run.sh parse &lt;文档目录&gt; --out data/parsed
+./run.sh build data/parsed --index data/index</code></pre>
+<h3 id="5-2-索引备份-回滚">5.2 索引备份/回滚</h3>
+<pre><code>cp -r data/index data/index.bak.$(date +%Y%m%d)
+# 回滚
+rm -rf data/index &amp;&amp; mv data/index.bak.YYYYMMDD data/index</code></pre>
+<p>索引目录自带 <code>version</code> 与 <code>created_at</code>，可用于审计。</p>
+<h3 id="5-3-模型切换">5.3 模型切换</h3>
+<pre><code>export DOCQA_MODEL_MODE=http
+export DOCQA_BASE_URL=https://.../v1
+export DOCQA_API_KEY=***
+./run.sh build data/parsed --index data/index   # 换 Embedding 后必须重建
+./run.sh doctor</code></pre>
+<blockquote>切换 Embedding 模型后必须全量重建索引；<code>build_index</code> 会检测 <code>vectors.json.model</code> 并强制重算。</blockquote>
+<h3 id="5-4-常见故障">5.4 常见故障</h3>
+<table>
+<thead><tr><th>现象</th><th>排查</th></tr></thead>
+<tbody>
+<tr><td><code>索引未就绪</code></td><td>先 <code>./run.sh demo</code> 或 <code>build</code></td></tr>
+<tr><td>图片未解析</td><td>检查路径、扩展名；EMF/WMF 需先渲染</td></tr>
+<tr><td>PDF 无文本</td><td>扫描件需 OCR；<code>pypdf</code> 是否安装</td></tr>
+<tr><td>回答总是无据</td><td>覆盖率/相关度阈值过高；检查索引文档与分类</td></tr>
+<tr><td>端点超时</td><td>检查 <code>DOCQA_BASE_URL</code>；失败后会自动降级 Mock，重启进程恢复</td></tr>
+<tr><td>Web 打开空白</td><td>检查 <code>data/index</code> 是否存在；浏览器控制台/网络面板</td></tr>
+</tbody></table>
+<hr>
+<h2 id="6-风险登记册">6. 风险登记册</h2>
+<table>
+<thead><tr><th>ID</th><th>风险</th><th>概率</th><th>影响</th><th>应对</th><th>责任人</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>内部模型端点不可用</td><td>中</td><td>高</td><td>Mock 降级 + 端点重试 + 告警</td><td>开发</td></tr>
+<tr><td>R2</td><td>矢量图/扫描件信息丢失</td><td>中</td><td>中</td><td>渲染扩展 + OCR 兜底 + 明示告警</td><td>开发</td></tr>
+<tr><td>R3</td><td>页码估算引发误引用</td><td>中</td><td>中</td><td><code>page_mode=estimated</code> 明示；关键文档用 PDF/PPT</td><td>产品</td></tr>
+<tr><td>R4</td><td>模型编造引用</td><td>低</td><td>高</td><td>只允许真实 Chunk 引用；回答后重编号；拒答机制</td><td>开发</td></tr>
+<tr><td>R5</td><td>敏感数据外泄</td><td>低</td><td>高</td><td>本地运行、127.0.0.1、内部端点、密钥环境变量</td><td>全员</td></tr>
+<tr><td>R6</td><td>规模增长导致检索变慢</td><td>中</td><td>中</td><td>增量、批量、向量库替换点</td><td>开发</td></tr>
+<tr><td>R7</td><td>演示语料与真实文档差异</td><td>高</td><td>中</td><td>上线前用部门语料重建测试集</td><td>产品</td></tr>
+</tbody></table>
+<hr>
+<h2 id="7-后续规划">7. 后续规划</h2>
+<h3 id="7-1-近期-1-2-周">7.1 近期（1–2 周）</h3>
+<ul>
+<li>接入真实 Qwen3-Embedding / Reranker / GLM / VL 端点，重跑 8 条用例并扩充到 50+；</li>
+<li>增加 PDF 矢量图渲染（PyMuPDF）；</li>
+<li>为 Web 增加流式输出与引用高亮。</li>
+</ul>
+<h3 id="7-2-中期-1-2-月">7.2 中期（1–2 月）</h3>
+<ul>
+<li>团队级 Service：多目录、多分类、定时任务、监控告警；</li>
+<li>领域级 Web：登录、权限、知识库切换、问答历史；</li>
+<li>索引后端替换（SQLite/FAISS/Milvus），保持 <code>Retriever</code> 接口不变。</li>
+</ul>
+<h3 id="7-3-长期">7.3 长期</h3>
+<ul>
+<li>文档自动归类与标签；</li>
+<li>回答质量反馈闭环（点赞/纠错 → 测试集）；</li>
+<li>与部门知识库、工单、Wiki 对接；</li>
+<li>多模态检索（图搜图、图搜文）。</li>
+</ul>
+<hr>
+<h2 id="8-交付检查表">8. 交付检查表</h2>
+<ul>
+<li>[x] 代码可运行：<code>./run.sh demo</code></li>
+<li>[x] 测试通过：<code>make test</code>（19 项）</li>
+<li>[x] 示例数据：5 文档 + 3 图 + 8 条测试问题</li>
+<li>[x] 模型配置样例：<code>env.example</code></li>
+<li>[x] 知识消费约定：<code>AGENTS.md</code> / <code>CLAUDE.md</code></li>
+<li>[x] 项目书 / 技术设计 / 实施验收 / 答辩讲稿</li>
+<li>[x] 汇报 Deck：HTML + PDF</li>
+<li>[x] Web 截图与 Demo 输出留档</li>
+</ul>
+<hr>
+<blockquote><strong>验收结论（演示环境）</strong>：核心闭环 1–3 步可运行，4–5 步已有可演示实现；指标口径清晰，溯源链路完整，具备进入真实部门语料试点的条件。</blockquote>
+<div class="footer-note">DocQA · 基于 AI Agent 的个人本地多模态文档智能问答系统 · 井永乐 | 00587807 · 2026-07-30</div>
+</body>
+</html>

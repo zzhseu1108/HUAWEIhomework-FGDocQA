@@ -1,0 +1,15 @@
+data/parsed/
+data/index/
+data/parsed-*/
+data/index-*/
+data/eval_report*.json
+data/*.log
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+.chrome/
+assets/deck/
+data/tmp/
+data/*.txt
+.env
