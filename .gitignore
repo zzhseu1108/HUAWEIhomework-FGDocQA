@@ -13,3 +13,7 @@ assets/deck/
 data/tmp/
 data/*.txt
 .env
+build/
+dist/
+output/
+.pytest_cache/

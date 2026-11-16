@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FGDocQA · 课程项目介绍</title>
+<style>
+@page{size:A4;margin:13mm 14mm}
+*{box-sizing:border-box}html{background:#eaf0f8}body{margin:0;color:#263951;font:13px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}p{margin:9px 0}a{color:#315ec7;text-decoration:none}h1,h2,h3{line-height:1.35}h1{font-size:40px;letter-spacing:-1.6px;margin:3px 0 6px;color:#23427b}h2{font-size:20px;margin:0 0 10px;color:#2b4772}h3{font-size:13px;margin:0 0 5px;color:#355884}.paper{width:210mm;margin:18px auto;background:#fff;box-shadow:0 6px 30px #28467b16}.page{padding:13mm 14mm;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.eyebrow{font-size:10px;font-weight:650;letter-spacing:1.3px;color:#607da8}.lede{font-size:16px;color:#5d7292;margin:0}.meta{font-size:10px;color:#8290a4;margin:14px 0 19px;border-top:1px solid #e2e9f4;padding-top:10px;display:flex;justify-content:space-between}.shot{width:100%;display:block;border:1px solid #e3eaf5;border-radius:12px;box-shadow:0 5px 20px #294a7d0b}.caption{font-size:9px;color:#8997ab;margin:7px 0 16px}.intro{font-size:12px;color:#5b6c82}.features{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}.feature{border:1px solid #e4ebf5;border-radius:9px;padding:11px 13px;background:#fbfcff}.feature p{font-size:11px;line-height:1.65;margin:0;color:#68798e}.tag{display:inline-block;background:#eaf2ff;color:#426bb2;padding:2px 8px;border-radius:4px;font-size:9px;margin-bottom:10px}.footer{border-top:1px solid #e4ebf5;padding-top:10px;margin-top:18px;font-size:9px;line-height:1.65;color:#8190a5}.page-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.page-number{font-size:10px;color:#91a0b6}.flow{display:grid;grid-template-columns:1fr 14px 1fr 14px 1fr 14px 1fr;align-items:center;gap:3px;margin:14px 0 19px}.node{border:1px solid #dce7f7;border-radius:8px;background:#f2f7ff;padding:10px 5px;text-align:center;color:#48638b;font-size:10px}.node b{display:block;font-size:11px;color:#36588b;margin-bottom:3px}.arrow{text-align:center;color:#8da8d3}.subhead{margin-top:20px;margin-bottom:9px;font-size:14px;font-weight:650;color:#355884}table{width:100%;border-collapse:collapse;font-size:10px;line-height:1.65}th,td{border:1px solid #dfe7f2;padding:8px 9px;text-align:left;vertical-align:top}th{background:#eef4fd;font-weight:650;color:#3f5b85}td{color:#62758c}.delivery{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}.delivery>div{border-top:3px solid #adc6ef;background:#f6f9fe;border-radius:5px;padding:10px}.delivery b{font-size:11px;color:#41618f}.delivery p{font-size:10px;line-height:1.6;color:#6b7d94;margin:5px 0 0}.note{border-left:3px solid #a9c8e9;background:#f5f9fe;padding:10px 13px;font-size:10px;line-height:1.75;color:#5b718c}.checks{margin:0;padding-left:18px;color:#64768e;font-size:10px;line-height:1.9}.url{font-size:10px;word-break:break-all}
+@media print{html,body{background:white}.paper{width:auto;margin:0;box-shadow:none}.page{padding:0;min-height:0}.page+.page{padding-top:0}.shot{box-shadow:none}a{color:inherit}.feature,.delivery>div,.node,th,.note{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media screen and (max-width:800px){.paper{width:100%;margin:0}.page{padding:24px}.features{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.delivery{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="paper">
+<section class="page">
+<div class="eyebrow">课程项目介绍 · DOCUMENT QUESTION ANSWERING</div>
+<h1>FGDocQA</h1>
+<p class="lede">让每一份好奇，都有据可循。</p>
+<div class="meta"><span>提交人：见班级个人材料文件夹</span><span>2026-11-16</span></div>
+<img class="shot" src="images/web-home-v2.jpg" alt="FGDocQA完整首页，包含DeepSeek社区鲸鱼娘、文库入口、示例问题与提问框">
+<p class="caption">图 1 · 实际运行首页，采用社区 DeepSeek 鲸鱼娘素材；默认 Mock 演示。</p>
+<p class="intro">FGDocQA 是一个在本机运行的文档问答工作台，将 PDF、Word、PPT、Markdown 和 TXT 的正文及支持格式的内嵌图片整理成知识库。系统先检索相关片段，再给出附来源的回答，方便继续核对原文。</p>
+<div class="features">
+<div class="feature"><h3>多格式 · 图文共同入库</h3><p>正文解析、图片提取和图片释义保留来源元信息，支持按文档、页码和图片回看依据。</p></div>
+<div class="feature"><h3>混合检索 · 兼顾词面与语义</h3><p>稠密向量、BM25 与本地 TF-IDF 稀疏召回，经 RRF 融合和精排输出候选片段。</p></div>
+<div class="feature"><h3>回答有据 · 证据不足会提示</h3><p>展示引用和检索轨迹；有据时附出处，证据不足时返回“无据不答”。</p></div>
+<div class="feature"><h3>浏览器工作台 · 开箱体验</h3><p>提供文库、分类、阅读、图片预览、会话、收藏、复制与 Markdown 导出。</p></div>
+</div>
+<div class="footer">课程交付包含源码、Windows / macOS 可执行程序与介绍材料。成品内含 Python 运行时和演示资源，完整解压后启动，无需另装 Python 或准备 API Key。</div>
+</section>
+<section class="page">
+<div class="page-heading"><h2>技术路线与交付说明</h2><span class="page-number">FGDocQA / 02</span></div>
+<span class="tag">Python 后端 · HTML / CSS / JavaScript 前端</span>
+<div class="flow">
+<div class="node"><b>doc2md</b>解析正文与图片<br>保留来源信息</div><div class="arrow">→</div>
+<div class="node"><b>DocBase</b>切片与三路索引<br>RRF 融合、精排</div><div class="arrow">→</div>
+<div class="node"><b>Agent</b>检索编排与判断<br>生成回答、引用</div><div class="arrow">→</div>
+<div class="node"><b>Web / CLI</b>问答与阅读<br>核对、收藏、导出</div>
+</div>
+<div class="subhead">两种模型使用方式</div>
+<table><thead><tr><th>区别</th><th>默认 Mock 演示</th><th>HTTP API 模式</th></tr></thead><tbody>
+<tr><td>运行条件</td><td>无需 Key，不下载大模型，适合离线验收</td><td>配置可用端点、准确模型 ID 和相应凭据</td></tr>
+<tr><td>模型能力</td><td>哈希向量、词面精排、图注规则释义、片段式回答</td><td>启用的能力调用真实 Embedding、Reranker、Chat 或视觉服务</td></tr>
+<tr><td>验证方式</td><td>程序自检与演示功能验证</td><td>用 probe 验证所需能力；只填配置不等于连通</td></tr>
+</tbody></table>
+<p style="font-size:10px;color:#6a7f98">四类能力可分别切换，部分 HTTP、部分 Mock 时属于混合模式。第三路稀疏检索当前为 tfidf-local，没有接入 BGE-M3 的学习型稀疏权重。</p>
+<div class="subhead">按课程要求整理的三类材料</div>
+<div class="delivery"><div><b>01 · 源码</b><p>业务代码、前端、示例、测试、构建脚本、配置模板和 README。</p></div><div><b>02 · 可执行程序</b><p>Windows x64、macOS Apple 芯片与 Intel 芯片版本；保留完整程序目录与 _internal。</p></div><div><b>03 · 介绍材料</b><p>项目介绍、使用说明、材料清单、实际运行截图和随包验证信息。</p></div></div>
+<div class="subhead">建议验收顺序</div>
+<div class="note">完整解压 → 启动对应系统程序 → 确认 Mock 与鲸鱼娘首页 → 点击示例问题 → 打开来源与文库 → 收藏或导出 → 在程序终端按 Ctrl+C 结束。</div>
+<div class="subhead">验证与当前边界</div>
+<ul class="checks">
+<li>原有工程测试集为 38 项；HTTP 单测使用模拟响应，不代表云端鉴权成功。本次成品构建与自检以随包验证记录为准。</li>
+<li>面向个人本机使用，监听 127.0.0.1，没有多用户登录权限体系；会话与收藏保存在当前浏览器。</li>
+<li>Mock 不代表真实语义模型效果；API 模式会向配置端点发送相应文本，启用真实视觉能力后还会发送图片。</li>
+<li>DOCX 页码为估算，扫描 PDF 无完整 OCR 流程；示例业务语料为虚构场景。</li>
+</ul>
+<div class="footer"><div class="url">源码：<a href="https://github.com/zzhseu1108/HUAWEIhomework-FGDocQA">github.com/zzhseu1108/HUAWEIhomework-FGDocQA</a></div><div>鲸鱼娘为社区同人素材，署名与 CC BY-NC-SA 4.0 许可随源码保留，见 ARTWORK-LICENSE.md；使用本形象不代表与 DeepSeek 官方存在关联。</div></div>
+</section>
+</main>
+</body>
+</html>
